@@ -156,16 +156,17 @@ npm install
 
 ## ⚙️ Configuration
 
-The server uses public RPC endpoints by default for all supported networks. For production use, you can configure custom RPC providers by:
+The server uses public RPC endpoints by default for all supported networks. For production use, you can configure server settings by:
 
 1. Create a `.env` file in the project root
-2. Add custom RPC URLs for any networks you want to override:
+2. Add custom configurations for any settings you want to override:
 
 ```env
 # Example .env configuration
-ETHEREUM_RPC_URL=https://your-custom-ethereum-rpc.com
-OPTIMISM_RPC_URL=https://your-custom-optimism-rpc.com
-ARBITRUM_RPC_URL=https://your-custom-arbitrum-rpc.com
+DEFAULT_CHAIN_ID=1 # The default chain ID to use if no chain ID is provided (default: Ethereum Mainnet)
+SERVER_PORT=3001 # The port to run the server on (default: 3001)
+SERVER_HOST=localhost # The host to run the server on (default: localhost)
+
 ```
 
 ## 🚀 Usage
