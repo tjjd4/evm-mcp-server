@@ -32,7 +32,7 @@ The MCP EVM Server leverages the Model Context Protocol to provide blockchain op
 - Interacting with smart contracts
 - Transferring tokens (native, ERC20, ERC721, ERC1155)
 - Querying token metadata and balances
-- Chain-specific operations across dozens of EVM networks
+- Chain-specific operations across 30+ EVM networks
 
 All operations are exposed through a consistent interface of MCP tools and resources, making it easy for AI agents to discover and use blockchain functionality.
 
