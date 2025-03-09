@@ -295,7 +295,9 @@ The server exposes blockchain data through the following MCP resource URIs:
 mcp-evm-server/
 ├── src/
 │   ├── index.ts                # Main stdio server entry point
-│   ├── http-server.ts          # HTTP server with SSE
+│   ├── server/                 # Server-related files
+│   │   ├── http-server.ts      # HTTP server with SSE
+│   │   └── server.ts           # General server setup
 │   ├── core/
 │   │   ├── chains.ts           # Chain definitions and utilities
 │   │   ├── resources.ts        # MCP resources implementation
@@ -304,13 +306,13 @@ mcp-evm-server/
 │   │   └── operations/         # Core blockchain operations
 │   │       ├── index.ts        # Operation exports
 │   │       ├── balance.ts      # Balance operations
-│   │       ├── blocks.ts       # Block operations
-│   │       ├── clients.ts      # RPC client utilities
-│   │       ├── contracts.ts    # Contract interactions
-│   │       ├── tokens.ts       # Token metadata operations
 │   │       ├── transfer.ts     # Token transfer operations
+│   │       ├── utils.ts        # Utility functions
+│   │       ├── tokens.ts       # Token metadata operations
+│   │       ├── contracts.ts    # Contract interactions
 │   │       ├── transactions.ts # Transaction operations
-│   │       └── utils.ts        # Utility functions
+│   │       └── blocks.ts       # Block operations
+│   │       └── clients.ts      # RPC client utilities
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -327,4 +329,4 @@ To modify or extend the server:
 
 ## 📄 License
 
-MIT
+This project is licensed under the terms of the [MIT License](./LICENSE).
