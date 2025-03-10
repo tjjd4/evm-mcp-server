@@ -1,4 +1,4 @@
-// Export all operations
+// Export all services
 export * from './clients.js';
 export * from './balance.js';
 export * from './transfer.js';

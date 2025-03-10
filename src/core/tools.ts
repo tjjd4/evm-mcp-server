@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getSupportedNetworks, getRpcUrl } from "./chains.js";
-import * as operations from "./operations/index.js";
+import * as services from "./services/index.js";
 import { type Address, type Hex, type Hash } from 'viem';
 import { normalize } from 'viem/ens';
 
@@ -25,8 +25,8 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ network = "ethereum" }) => {
       try {
-        const chainId = await operations.getChainId(network);
-        const blockNumber = await operations.getBlockNumber(network);
+        const chainId = await services.getChainId(network);
+        const blockNumber = await services.getBlockNumber(network);
         const rpcUrl = getRpcUrl(network);
         
         return {
@@ -79,7 +79,7 @@ export function registerEVMTools(server: McpServer) {
         const normalizedEns = normalize(ensName);
         
         // Resolve the ENS name to an address
-        const address = await operations.resolveAddress(ensName, network);
+        const address = await services.resolveAddress(ensName, network);
         
         return {
           content: [{
@@ -145,12 +145,12 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ blockNumber, network = "ethereum" }) => {
       try {
-        const block = await operations.getBlockByNumber(blockNumber, network);
+        const block = await services.getBlockByNumber(blockNumber, network);
         
         return {
           content: [{
             type: "text",
-            text: operations.helpers.formatJson(block)
+            text: services.helpers.formatJson(block)
           }]
         };
       } catch (error) {
@@ -174,12 +174,12 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ network = "ethereum" }) => {
       try {
-        const block = await operations.getLatestBlock(network);
+        const block = await services.getLatestBlock(network);
         
         return {
           content: [{
             type: "text",
-            text: operations.helpers.formatJson(block)
+            text: services.helpers.formatJson(block)
           }]
         };
       } catch (error) {
@@ -206,7 +206,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ address, network = "ethereum" }) => {
       try {
-        const balance = await operations.getETHBalance(address, network);
+        const balance = await services.getETHBalance(address, network);
         
         return {
           content: [{
@@ -242,7 +242,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ address, tokenAddress, network = "ethereum" }) => {
       try {
-        const balance = await operations.getERC20Balance(
+        const balance = await services.getERC20Balance(
           tokenAddress as Address,
           address as Address,
           network
@@ -286,7 +286,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ tokenAddress, ownerAddress, network = "ethereum" }) => {
       try {
-        const balance = await operations.getERC20Balance(tokenAddress, ownerAddress, network);
+        const balance = await services.getERC20Balance(tokenAddress, ownerAddress, network);
         
         return {
           content: [{
@@ -326,12 +326,12 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ txHash, network = "ethereum" }) => {
       try {
-        const tx = await operations.getTransaction(txHash as Hash, network);
+        const tx = await services.getTransaction(txHash as Hash, network);
         
         return {
           content: [{
             type: "text",
-            text: operations.helpers.formatJson(tx)
+            text: services.helpers.formatJson(tx)
           }]
         };
       } catch (error) {
@@ -356,12 +356,12 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ txHash, network = "ethereum" }) => {
       try {
-        const receipt = await operations.getTransactionReceipt(txHash as Hash, network);
+        const receipt = await services.getTransactionReceipt(txHash as Hash, network);
         
         return {
           content: [{
             type: "text",
-            text: operations.helpers.formatJson(receipt)
+            text: services.helpers.formatJson(receipt)
           }]
         };
       } catch (error) {
@@ -391,14 +391,14 @@ export function registerEVMTools(server: McpServer) {
         const params: any = { to: to as Address };
         
         if (value) {
-          params.value = operations.helpers.parseEther(value);
+          params.value = services.helpers.parseEther(value);
         }
         
         if (data) {
           params.data = data as `0x${string}`;
         }
         
-        const gas = await operations.estimateGas(params, network);
+        const gas = await services.estimateGas(params, network);
         
         return {
           content: [{
@@ -435,7 +435,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ privateKey, to, amount, network = "ethereum" }) => {
       try {
-        const txHash = await operations.transferETH(privateKey, to, amount, network);
+        const txHash = await services.transferETH(privateKey, to, amount, network);
         
         return {
           content: [{
@@ -479,7 +479,7 @@ export function registerEVMTools(server: McpServer) {
           ? privateKey as `0x${string}` 
           : `0x${privateKey}` as `0x${string}`;
         
-        const result = await operations.transferERC20(
+        const result = await services.transferERC20(
           tokenAddress as Address, 
           toAddress as Address, 
           amount,
@@ -531,7 +531,7 @@ export function registerEVMTools(server: McpServer) {
           ? privateKey as `0x${string}` 
           : `0x${privateKey}` as `0x${string}`;
         
-        const result = await operations.approveERC20(
+        const result = await services.approveERC20(
           tokenAddress as Address, 
           spenderAddress as Address, 
           amount,
@@ -583,7 +583,7 @@ export function registerEVMTools(server: McpServer) {
           ? privateKey as `0x${string}` 
           : `0x${privateKey}` as `0x${string}`;
         
-        const result = await operations.transferERC721(
+        const result = await services.transferERC721(
           tokenAddress as Address, 
           toAddress as Address, 
           BigInt(tokenId),
@@ -637,7 +637,7 @@ export function registerEVMTools(server: McpServer) {
           ? privateKey as `0x${string}` 
           : `0x${privateKey}` as `0x${string}`;
         
-        const result = await operations.transferERC1155(
+        const result = await services.transferERC1155(
           tokenAddress as Address, 
           toAddress as Address, 
           BigInt(tokenId),
@@ -685,7 +685,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ privateKey, tokenAddress, toAddress, amount, network = "ethereum" }) => {
       try {
-        const result = await operations.transferERC20(
+        const result = await services.transferERC20(
           tokenAddress,
           toAddress,
           amount,
@@ -744,12 +744,12 @@ export function registerEVMTools(server: McpServer) {
           args
         };
         
-        const result = await operations.readContract(params, network);
+        const result = await services.readContract(params, network);
         
         return {
           content: [{
             type: "text",
-            text: operations.helpers.formatJson(result)
+            text: services.helpers.formatJson(result)
           }]
         };
       } catch (error) {
@@ -788,7 +788,7 @@ export function registerEVMTools(server: McpServer) {
           args
         };
         
-        const txHash = await operations.writeContract(
+        const txHash = await services.writeContract(
           privateKey as Hex, 
           contractParams, 
           network
@@ -826,7 +826,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ address, network = "ethereum" }) => {
       try {
-        const isContract = await operations.isContract(address, network);
+        const isContract = await services.isContract(address, network);
         
         return {
           content: [{
@@ -861,7 +861,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ tokenAddress, network = "ethereum" }) => {
       try {
-        const tokenInfo = await operations.getERC20TokenInfo(tokenAddress as Address, network);
+        const tokenInfo = await services.getERC20TokenInfo(tokenAddress as Address, network);
         
         return {
           content: [{
@@ -896,7 +896,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ address, tokenAddress, network = "ethereum" }) => {
       try {
-        const balance = await operations.getERC20Balance(
+        const balance = await services.getERC20Balance(
           tokenAddress as Address,
           address as Address,
           network
@@ -940,7 +940,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ tokenAddress, tokenId, network = "ethereum" }) => {
       try {
-        const nftInfo = await operations.getERC721TokenMetadata(
+        const nftInfo = await services.getERC721TokenMetadata(
           tokenAddress as Address, 
           BigInt(tokenId), 
           network
@@ -950,7 +950,7 @@ export function registerEVMTools(server: McpServer) {
         let owner = null;
         try {
           // This may fail if tokenId doesn't exist
-          owner = await operations.getPublicClient(network).readContract({
+          owner = await services.getPublicClient(network).readContract({
             address: tokenAddress as Address,
             abi: [{ 
               inputs: [{ type: 'uint256' }], 
@@ -1002,7 +1002,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ tokenAddress, tokenId, ownerAddress, network = "ethereum" }) => {
       try {
-        const isOwner = await operations.isNFTOwner(
+        const isOwner = await services.isNFTOwner(
           tokenAddress,
           ownerAddress,
           BigInt(tokenId),
@@ -1045,7 +1045,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ tokenAddress, tokenId, network = "ethereum" }) => {
       try {
-        const uri = await operations.getERC1155TokenURI(
+        const uri = await services.getERC1155TokenURI(
           tokenAddress as Address, 
           BigInt(tokenId), 
           network
@@ -1085,7 +1085,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ tokenAddress, ownerAddress, network = "ethereum" }) => {
       try {
-        const balance = await operations.getERC721Balance(
+        const balance = await services.getERC721Balance(
           tokenAddress as Address, 
           ownerAddress as Address, 
           network
@@ -1126,7 +1126,7 @@ export function registerEVMTools(server: McpServer) {
     },
     async ({ tokenAddress, tokenId, ownerAddress, network = "ethereum" }) => {
       try {
-        const balance = await operations.getERC1155Balance(
+        const balance = await services.getERC1155Balance(
           tokenAddress as Address, 
           ownerAddress as Address, 
           BigInt(tokenId),
@@ -1171,7 +1171,7 @@ export function registerEVMTools(server: McpServer) {
         // Ensure the private key has 0x prefix
         const formattedKey = privateKey.startsWith('0x') ? privateKey as Hex : `0x${privateKey}` as Hex;
         
-        const address = operations.getAddressFromPrivateKey(formattedKey);
+        const address = services.getAddressFromPrivateKey(formattedKey);
         
         return {
           content: [{

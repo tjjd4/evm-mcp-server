@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6)
 ![Viem](https://img.shields.io/badge/Viem-1.0+-green)
 
-A comprehensive Model Context Protocol (MCP) server that provides blockchain operations across multiple EVM-compatible networks. This server enables AI agents to interact with Ethereum, Optimism, Arbitrum, Base, Polygon, and many other EVM chains with a unified interface.
+A comprehensive Model Context Protocol (MCP) server that provides blockchain services across multiple EVM-compatible networks. This server enables AI agents to interact with Ethereum, Optimism, Arbitrum, Base, Polygon, and many other EVM chains with a unified interface.
 
 ## 📋 Contents
 
@@ -26,16 +26,16 @@ A comprehensive Model Context Protocol (MCP) server that provides blockchain ope
 
 ## 🔭 Overview
 
-The MCP EVM Server leverages the Model Context Protocol to provide blockchain operations to AI agents. It supports a wide range of operations including:
+The MCP EVM Server leverages the Model Context Protocol to provide blockchain services to AI agents. It supports a wide range of services including:
 
 - Reading blockchain state (balances, transactions, blocks, etc.)
 - Interacting with smart contracts
 - Transferring tokens (native, ERC20, ERC721, ERC1155)
 - Querying token metadata and balances
-- Chain-specific operations across 30+ EVM networks
+- Chain-specific services across 30+ EVM networks
 - **ENS name resolution** for all address parameters (use human-readable names like 'vitalik.eth' instead of addresses)
 
-All operations are exposed through a consistent interface of MCP tools and resources, making it easy for AI agents to discover and use blockchain functionality. **Every tool that accepts Ethereum addresses also supports ENS names**, automatically resolving them to addresses behind the scenes.
+All services are exposed through a consistent interface of MCP tools and resources, making it easy for AI agents to discover and use blockchain functionality. **Every tool that accepts Ethereum addresses also supports ENS names**, automatically resolving them to addresses behind the scenes.
 
 ## ✨ Features
 
@@ -48,7 +48,7 @@ All operations are exposed through a consistent interface of MCP tools and resou
 - **Address balances** for native tokens and all token standards
 - **ENS resolution** for human-readable Ethereum addresses (use 'vitalik.eth' instead of '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045')
 
-### Token Operations
+### Token services
 
 - **ERC20 Tokens**
   - Get token metadata (name, symbol, decimals, supply)
@@ -70,7 +70,7 @@ All operations are exposed through a consistent interface of MCP tools and resou
 ### Smart Contract Interactions
 
 - **Read contract state** through view/pure functions
-- **Write operations** with private key signing
+- **Write services** with private key signing
 - **Contract verification** to distinguish from EOAs
 - **Event logs** retrieval and filtering
 
@@ -279,7 +279,7 @@ console.log(result);
 
 The server provides the following MCP tools for agents. **All tools that accept address parameters support both Ethereum addresses and ENS names.**
 
-#### Token Operations
+#### Token services
 
 | Tool Name | Description | Key Parameters |
 |-----------|-------------|----------------|
@@ -295,7 +295,7 @@ The server provides the following MCP tools for agents. **All tools that accept 
 | `get-erc1155-balance` | Check ERC1155 balance | `tokenAddress` (address/ENS), `tokenId`, `ownerAddress` (address/ENS), `network` |
 | `transfer-erc1155` | Transfer ERC1155 tokens | `privateKey`, `tokenAddress` (address/ENS), `tokenId`, `amount`, `toAddress` (address/ENS), `network` |
 
-#### Blockchain Operations
+#### Blockchain services
 
 | Tool Name | Description | Key Parameters |
 |-----------|-------------|----------------|
@@ -341,7 +341,7 @@ The server exposes blockchain data through the following MCP resource URIs. All 
 - Consider implementing additional authentication mechanisms for production use
 - Use HTTPS for the HTTP server in production environments
 - Implement rate limiting to prevent abuse
-- For high-value operations, consider adding confirmation steps
+- For high-value services, consider adding confirmation steps
 
 ## 📁 Project Structure
 
@@ -357,15 +357,15 @@ mcp-evm-server/
 │   │   ├── resources.ts        # MCP resources implementation
 │   │   ├── tools.ts            # MCP tools implementation
 │   │   ├── prompts.ts          # MCP prompts implementation
-│   │   └── operations/         # Core blockchain operations
+│   │   └── services/           # Core blockchain services
 │   │       ├── index.ts        # Operation exports
-│   │       ├── balance.ts      # Balance operations
-│   │       ├── transfer.ts     # Token transfer operations
+│   │       ├── balance.ts      # Balance services
+│   │       ├── transfer.ts     # Token transfer services
 │   │       ├── utils.ts        # Utility functions
-│   │       ├── tokens.ts       # Token metadata operations
+│   │       ├── tokens.ts       # Token metadata services
 │   │       ├── contracts.ts    # Contract interactions
-│   │       ├── transactions.ts # Transaction operations
-│   │       └── blocks.ts       # Block operations
+│   │       ├── transactions.ts # Transaction services
+│   │       └── blocks.ts       # Block services
 │   │       └── clients.ts      # RPC client utilities
 ├── package.json
 ├── tsconfig.json
@@ -376,7 +376,7 @@ mcp-evm-server/
 
 To modify or extend the server:
 
-1. Add new operations in the appropriate file under `src/core/operations/`
+1. Add new services in the appropriate file under `src/core/services/`
 2. Register new tools in `src/core/tools.ts`
 3. Register new resources in `src/core/resources.ts`
 4. Add new network support in `src/core/chains.ts`

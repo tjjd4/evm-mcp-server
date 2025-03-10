@@ -56,7 +56,7 @@ app.get("/sse", (req: Request, res: Response) => {
   
   // Generate a unique session ID if one is not provided
   // The sessionId is crucial for mapping SSE connections to message handlers
-  const sessionId = req.query.sessionId?.toString() || generateSessionId();
+  const sessionId = generateSessionId();
   console.error(`Creating SSE session with ID: ${sessionId}`);
   
   // Set SSE headers
@@ -84,6 +84,9 @@ app.get("/sse", (req: Request, res: Response) => {
       // Send an initial event with the session ID for the client to use in messages
       // Only send this after the connection is established
       console.error(`SSE connection established for session: ${sessionId}`);
+      
+      // Send the session ID to the client
+      res.write(`data: ${JSON.stringify({ type: "session_init", sessionId })}\n\n`);
     }).catch((error: Error) => {
       console.error(`Error connecting transport to server: ${error}`);
       connections.delete(sessionId);
@@ -98,7 +101,13 @@ app.get("/sse", (req: Request, res: Response) => {
 // @ts-ignore
 app.post("/messages", (req: Request, res: Response) => {
   // Extract the session ID from the URL query parameters
-  const sessionId = req.query.sessionId?.toString();
+  let sessionId = req.query.sessionId?.toString();
+  
+  // If no sessionId is provided and there's only one connection, use that
+  if (!sessionId && connections.size === 1) {
+    sessionId = Array.from(connections.keys())[0];
+    console.error(`No sessionId provided, using the only active session: ${sessionId}`);
+  }
   
   console.error(`Received message for sessionId ${sessionId}`);
   console.error(`Message body: ${JSON.stringify(req.body)}`);
@@ -114,8 +123,11 @@ app.post("/messages", (req: Request, res: Response) => {
   }
   
   if (!sessionId) {
-    console.error("No session ID provided");
-    return res.status(400).json({ error: "No session ID provided" });
+    console.error("No session ID provided and multiple connections exist");
+    return res.status(400).json({ 
+      error: "No session ID provided. Please provide a sessionId query parameter or connect to /sse first.",
+      activeConnections: connections.size
+    });
   }
   
   const transport = connections.get(sessionId);
@@ -149,7 +161,7 @@ app.get("/health", (req: Request, res: Response) => {
 // Add a root endpoint for basic info
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
-    name: "MCP EVM Server",
+    name: "MCP Server",
     version: "1.0.0",
     endpoints: {
       sse: "/sse",
@@ -181,10 +193,10 @@ process.on('SIGINT', () => {
 
 // Start the HTTP server on a different port (3001) to avoid conflicts
 const httpServer = app.listen(PORT, HOST, () => {
-  console.error(`EVM MCP Server running at http://${HOST}:${PORT}`);
-  console.error(`SSE endpoint: http://${HOST}:${PORT}/sse?sessionId=YOUR_SESSION_ID`);
-  console.error(`Messages endpoint: http://${HOST}:${PORT}/messages?sessionId=YOUR_SESSION_ID`);
+  console.error(`Template MCP Server running at http://${HOST}:${PORT}`);
+  console.error(`SSE endpoint: http://${HOST}:${PORT}/sse`);
+  console.error(`Messages endpoint: http://${HOST}:${PORT}/messages (sessionId optional if only one connection)`);
   console.error(`Health check: http://${HOST}:${PORT}/health`);
-}).on('error', (err) => {
+}).on('error', (err: Error) => {
   console.error(`Server error: ${err}`);
 }); 
