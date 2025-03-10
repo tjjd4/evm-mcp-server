@@ -595,7 +595,7 @@ export function registerEVMTools(server: McpServer) {
           tokenAddress as Address, 
           toAddress as Address, 
           BigInt(tokenId),
-          BigInt(amount),
+          amount,
           formattedKey,
           network
         );

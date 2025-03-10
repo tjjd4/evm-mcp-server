@@ -1,9 +1,5 @@
-import { config } from "dotenv";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import startServer from "./server/server.js";
-
-// Load environment variables
-config();
 
 // Start the server
 async function main() {

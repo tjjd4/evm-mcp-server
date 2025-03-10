@@ -3,10 +3,6 @@ import { registerEVMResources } from "../core/resources.js";
 import { registerEVMTools } from "../core/tools.js";
 import { registerEVMPrompts } from "../core/prompts.js";
 import { getSupportedNetworks } from "../core/chains.js";
-import dotenv from "dotenv";
-
-// Load environment variables
-dotenv.config();
 
 // Create and start the MCP server
 async function startServer() {

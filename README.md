@@ -14,7 +14,7 @@ A comprehensive Model Context Protocol (MCP) server that provides blockchain ope
 - [Supported Networks](#supported-networks)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Configuration](#configuration)
+- [Server Configuration](#server-configuration)
 - [Usage](#usage)
 - [API Reference](#api-reference)
   - [Tools](#tools)
@@ -154,20 +154,18 @@ bun install
 npm install
 ```
 
-## ⚙️ Configuration
+## ⚙️ Server Configuration
 
-The server uses public RPC endpoints by default for all supported networks. For production use, you can configure server settings by:
+The server uses the following default configuration:
 
-1. Create a `.env` file in the project root
-2. Add custom configurations for any settings you want to override:
+- **Default Chain ID**: 1 (Ethereum Mainnet)
+- **Server Port**: 3001
+- **Server Host**: 0.0.0.0 (accessible from any network interface)
 
-```env
-# Example .env configuration
-DEFAULT_CHAIN_ID=1 # The default chain ID to use if no chain ID is provided (default: Ethereum Mainnet)
-SERVER_PORT=3001 # The port to run the server on (default: 3001)
-SERVER_HOST=localhost # The host to run the server on (default: localhost)
+These values are hardcoded in the application. If you need to modify them, you can edit the following files:
 
-```
+- For chain configuration: `src/core/chains.ts`
+- For server configuration: `src/server/http-server.ts`
 
 ## 🚀 Usage
 
@@ -327,6 +325,7 @@ To modify or extend the server:
 2. Register new tools in `src/core/tools.ts`
 3. Register new resources in `src/core/resources.ts`
 4. Add new network support in `src/core/chains.ts`
+5. To change server configuration, edit the hardcoded values in `src/server/http-server.ts`
 
 ## 📄 License
 

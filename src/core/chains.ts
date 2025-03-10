@@ -55,9 +55,9 @@ import {
   holesky
 } from 'viem/chains';
 
-// Load default config from environment variables
-export const DEFAULT_RPC_URL = process.env.DEFAULT_RPC_URL || 'https://eth.llamarpc.com';
-export const DEFAULT_CHAIN_ID = parseInt(process.env.DEFAULT_CHAIN_ID || '1');
+// Default configuration values
+export const DEFAULT_RPC_URL = 'https://eth.llamarpc.com';
+export const DEFAULT_CHAIN_ID = 1;
 
 // Map chain IDs to chains
 export const chainMap: Record<number, Chain> = {
@@ -239,7 +239,7 @@ export const rpcUrlMap: Record<number, string> = {
   7700: 'https://canto.gravitychain.io',
   
   // Testnets
-  11155111: 'https://rpc.sepolia.org',
+  11155111: 'https://sepolia.drpc.org',
   11155420: 'https://sepolia.optimism.io',
   421614: 'https://sepolia-rpc.arbitrum.io/rpc',
   84532: 'https://sepolia.base.org',
