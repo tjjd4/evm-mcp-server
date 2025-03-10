@@ -1,9 +1,6 @@
 import { 
   parseEther,
   formatEther,
-  createWalletClient,
-  http,
-  parseAbi,
   type Account,
   type Hash,
   type Chain,
@@ -11,34 +8,6 @@ import {
   type Transport,
   type HttpTransport
 } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import { getChain } from '../chains.js';
-
-/**
- * Create a wallet client from a private key and network
- * @param privateKey Private key as a hex string
- * @param network Network name or chain ID
- * @returns Wallet client instance
- */
-export async function getWalletClient(
-  privateKey: string, 
-  network: string
-): Promise<WalletClient> {
-  const chain = getChain(network);
-  
-  // Ensure the private key has 0x prefix
-  const formattedKey = privateKey.startsWith('0x') 
-    ? privateKey as `0x${string}` 
-    : `0x${privateKey}` as `0x${string}`;
-    
-  const account = privateKeyToAccount(formattedKey);
-  
-  return createWalletClient({
-    account,
-    chain,
-    transport: http()
-  });
-}
 
 /**
  * Utility functions for formatting and parsing values

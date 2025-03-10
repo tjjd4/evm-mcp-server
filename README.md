@@ -33,6 +33,7 @@ The MCP EVM Server leverages the Model Context Protocol to provide blockchain op
 - Transferring tokens (native, ERC20, ERC721, ERC1155)
 - Querying token metadata and balances
 - Chain-specific operations across 30+ EVM networks
+- ENS name resolution for all address parameters
 
 All operations are exposed through a consistent interface of MCP tools and resources, making it easy for AI agents to discover and use blockchain functionality.
 
@@ -45,6 +46,7 @@ All operations are exposed through a consistent interface of MCP tools and resou
 - **Block data** access by number, hash, or latest
 - **Transaction details** and receipts with decoded logs
 - **Address balances** for native tokens and all token standards
+- **ENS resolution** for human-readable Ethereum addresses
 
 ### Token Operations
 
@@ -195,22 +197,22 @@ bun dev:http
 
 Connect to this MCP server using any MCP-compatible client. For testing and debugging, you can use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector).
 
-### Example: Getting a Token Balance
+### Example: Getting a Token Balance with ENS
 
 ```javascript
-// Example of using the MCP client to check a token balance
+// Example of using the MCP client to check a token balance using ENS
 const mcp = new McpClient("http://localhost:3000");
 
 const result = await mcp.invokeTool("get-token-balance", {
   tokenAddress: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC on Ethereum
-  ownerAddress: "0x1234567890abcdef1234567890abcdef12345678",
+  ownerAddress: "vitalik.eth", // ENS name instead of address
   network: "ethereum"
 });
 
 console.log(result);
 // {
 //   tokenAddress: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-//   owner: "0x1234567890abcdef1234567890abcdef12345678",
+//   owner: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
 //   network: "ethereum",
 //   raw: "1000000000",
 //   formatted: "1000",
