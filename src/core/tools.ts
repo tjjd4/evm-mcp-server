@@ -3,9 +3,14 @@ import { z } from "zod";
 import { getSupportedNetworks, getRpcUrl } from "./chains.js";
 import * as operations from "./operations/index.js";
 import { type Address, type Hex, type Hash } from 'viem';
+import { normalize } from 'viem/ens';
 
 /**
  * Register all EVM-related tools with the MCP server
+ * 
+ * All tools that accept Ethereum addresses also support ENS names (e.g., 'vitalik.eth').
+ * ENS names are automatically resolved to addresses using the Ethereum Name Service.
+ * 
  * @param server The MCP server instance
  */
 export function registerEVMTools(server: McpServer) {
@@ -40,6 +45,58 @@ export function registerEVMTools(server: McpServer) {
           content: [{
             type: "text",
             text: `Error fetching chain info: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // ENS LOOKUP TOOL
+  
+  // Resolve ENS name to address
+  server.tool(
+    "resolve-ens",
+    "Resolve an ENS name to an Ethereum address",
+    {
+      ensName: z.string().describe("ENS name to resolve (e.g., 'vitalik.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. ENS resolution works best on Ethereum mainnet. Defaults to Ethereum mainnet.")
+    },
+    async ({ ensName, network = "ethereum" }) => {
+      try {
+        // Validate that the input is an ENS name
+        if (!ensName.includes('.')) {
+          return {
+            content: [{
+              type: "text",
+              text: `Error: Input "${ensName}" is not a valid ENS name. ENS names must contain a dot (e.g., 'name.eth').`
+            }],
+            isError: true
+          };
+        }
+        
+        // Normalize the ENS name
+        const normalizedEns = normalize(ensName);
+        
+        // Resolve the ENS name to an address
+        const address = await operations.resolveAddress(ensName, network);
+        
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              ensName: ensName,
+              normalizedName: normalizedEns,
+              resolvedAddress: address,
+              network
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error resolving ENS name: ${error instanceof Error ? error.message : String(error)}`
           }],
           isError: true
         };
@@ -142,14 +199,14 @@ export function registerEVMTools(server: McpServer) {
   // Get ETH balance
   server.tool(
     "get-balance",
-    "Get the native token balance (ETH on Ethereum, MATIC on Polygon, etc.) for an address. Returns both raw (wei) and formatted values.",
+    "Get the native token balance (ETH, MATIC, etc.) for an address", 
     {
-      address: z.string().describe("The wallet address to check the balance for (e.g., '0x1234...')"),
-      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', 'polygon') or chain ID. The balance will be for the native token of the specified network. Defaults to Ethereum mainnet.")
+      address: z.string().describe("The wallet address or ENS name (e.g., '0x1234...' or 'vitalik.eth') to check the balance for"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
     async ({ address, network = "ethereum" }) => {
       try {
-        const balance = await operations.getETHBalance(address as Address, network);
+        const balance = await operations.getETHBalance(address, network);
         
         return {
           content: [{
@@ -157,10 +214,8 @@ export function registerEVMTools(server: McpServer) {
             text: JSON.stringify({
               address,
               network,
-              balance: {
-                wei: balance.wei.toString(),
-                ether: balance.ether
-              }
+              wei: balance.wei.toString(),
+              ether: balance.ether
             }, null, 2)
           }]
         };
@@ -220,22 +275,18 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
-  // Add back get-token-balance tool
+  // Get ERC20 token balance
   server.tool(
     "get-token-balance",
-    "Get the ERC20 token balance for an address. Returns the token balance in both raw (wei) and formatted units, along with token metadata like symbol and decimals.",
+    "Get the balance of an ERC20 token for an address",
     {
-      tokenAddress: z.string().describe("The contract address of the ERC20 token (e.g., '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' for USDC on Ethereum)"),
-      ownerAddress: z.string().describe("The wallet address to check the balance for (e.g., '0x1234...')"),
-      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', 'polygon') or chain ID. Defaults to Ethereum mainnet.")
+      tokenAddress: z.string().describe("The contract address or ENS name of the ERC20 token (e.g., '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' for USDC or 'uniswap.eth')"),
+      ownerAddress: z.string().describe("The wallet address or ENS name to check the balance for (e.g., '0x1234...' or 'vitalik.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
     async ({ tokenAddress, ownerAddress, network = "ethereum" }) => {
       try {
-        const balanceInfo = await operations.getERC20Balance(
-          tokenAddress as Address, 
-          ownerAddress as Address, 
-          network
-        );
+        const balance = await operations.getERC20Balance(tokenAddress, ownerAddress, network);
         
         return {
           content: [{
@@ -244,10 +295,10 @@ export function registerEVMTools(server: McpServer) {
               tokenAddress,
               owner: ownerAddress,
               network,
-              raw: balanceInfo.raw.toString(),
-              formatted: balanceInfo.formatted,
-              symbol: balanceInfo.token.symbol,
-              decimals: balanceInfo.token.decimals
+              raw: balance.raw.toString(),
+              formatted: balance.formatted,
+              symbol: balance.token.symbol,
+              decimals: balance.token.decimals
             }, null, 2)
           }]
         };
@@ -375,31 +426,26 @@ export function registerEVMTools(server: McpServer) {
   // Transfer ETH
   server.tool(
     "transfer-eth",
-    "Transfer native tokens (ETH on Ethereum, MATIC on Polygon, etc.) to another address. Requires a private key for signing the transaction.",
+    "Transfer native tokens (ETH, MATIC, etc.) to an address",
     {
-      to: z.string().describe("The recipient wallet address that will receive the tokens (e.g., '0x1234...')"),
-      amount: z.string().describe("The amount of native tokens to send in standard units (e.g., '0.1' for 0.1 ETH), not wei"),
-      privateKey: z.string().describe("Private key of the sending account in hex format (with or without 0x prefix). SECURITY: This is used only for transaction signing and is not stored."),
-      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', 'polygon') or chain ID. The native token will be the one for the specified network. Defaults to Ethereum mainnet.")
+      privateKey: z.string().describe("Private key of the sender account in hex format (with or without 0x prefix). SECURITY: This is used only for transaction signing and is not stored."),
+      to: z.string().describe("The recipient address or ENS name (e.g., '0x1234...' or 'vitalik.eth')"),
+      amount: z.string().describe("Amount to send in ETH (or the native token of the network), as a string (e.g., '0.1')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
-    async ({ to, amount, privateKey, network = "ethereum" }) => {
+    async ({ privateKey, to, amount, network = "ethereum" }) => {
       try {
-        const txHash = await operations.transferETH(
-          privateKey as Hex,
-          to as Address,
-          amount,
-          network
-        );
+        const txHash = await operations.transferETH(privateKey, to, amount, network);
         
         return {
           content: [{
             type: "text",
             text: JSON.stringify({
-              network,
+              success: true,
+              txHash,
               to,
               amount,
-              transactionHash: txHash,
-              message: "ETH transfer sent successfully"
+              network
             }, null, 2)
           }]
         };
@@ -626,29 +672,24 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
-  // Add back the transfer-token tool as a more friendly name for transfer-erc20
+  // Transfer ERC20 tokens
   server.tool(
     "transfer-token",
-    "Transfer ERC20 tokens from one address to another. Requires a private key for signing the transaction. The private key is used only for signing and is never stored.",
+    "Transfer ERC20 tokens to an address",
     {
-      privateKey: z.string().describe("Private key of the sending account in hex format (with or without 0x prefix). SECURITY: This is used only for transaction signing and is not stored."),
-      tokenAddress: z.string().describe("The contract address of the ERC20 token to transfer (e.g., '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' for USDC on Ethereum)"),
-      toAddress: z.string().describe("The recipient wallet address that will receive the tokens"),
-      amount: z.string().describe("The amount of tokens to send in token units, not wei (e.g., '10.5' for 10.5 tokens). Decimal precision depends on the token."),
-      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', 'polygon') or chain ID. Defaults to Ethereum mainnet.")
+      privateKey: z.string().describe("Private key of the sender account in hex format (with or without 0x prefix). SECURITY: This is used only for transaction signing and is not stored."),
+      tokenAddress: z.string().describe("The contract address or ENS name of the ERC20 token to transfer (e.g., '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' for USDC or 'uniswap.eth')"),
+      toAddress: z.string().describe("The recipient address or ENS name that will receive the tokens (e.g., '0x1234...' or 'vitalik.eth')"),
+      amount: z.string().describe("Amount of tokens to send as a string (e.g., '100' for 100 tokens). This will be adjusted for the token's decimals."),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
     async ({ privateKey, tokenAddress, toAddress, amount, network = "ethereum" }) => {
       try {
-        // Get the formattedKey with 0x prefix
-        const formattedKey = privateKey.startsWith('0x') 
-          ? privateKey as `0x${string}` 
-          : `0x${privateKey}` as `0x${string}`;
-        
         const result = await operations.transferERC20(
-          tokenAddress as Address, 
-          toAddress as Address, 
+          tokenAddress,
+          toAddress,
           amount,
-          formattedKey,
+          privateKey,
           network
         );
         
@@ -658,11 +699,11 @@ export function registerEVMTools(server: McpServer) {
             text: JSON.stringify({
               success: true,
               txHash: result.txHash,
-              network,
               tokenAddress,
-              recipient: toAddress,
+              toAddress,
               amount: result.amount.formatted,
-              symbol: result.token.symbol
+              symbol: result.token.symbol,
+              network
             }, null, 2)
           }]
         };
@@ -778,17 +819,14 @@ export function registerEVMTools(server: McpServer) {
   // Check if address is a contract
   server.tool(
     "is-contract",
-    "Determine if an address is a smart contract or an externally owned account (EOA). Returns a boolean indicating if the address contains code.",
+    "Check if an address is a smart contract or an externally owned account (EOA)",
     {
-      address: z.string().describe("The wallet or contract address to check (e.g., '0x1234...')"),
-      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', 'polygon') or chain ID. Defaults to Ethereum mainnet.")
+      address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'uniswap.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
     async ({ address, network = "ethereum" }) => {
       try {
-        const isContract = await operations.isContract(
-          address as Address, 
-          network
-        );
+        const isContract = await operations.isContract(address, network);
         
         return {
           content: [{
@@ -797,7 +835,7 @@ export function registerEVMTools(server: McpServer) {
               address,
               network,
               isContract,
-              type: isContract ? "Contract" : "EOA (Externally Owned Account)"
+              type: isContract ? "Contract" : "Externally Owned Account (EOA)"
             }, null, 2)
           }]
         };
@@ -955,19 +993,19 @@ export function registerEVMTools(server: McpServer) {
   // Check NFT ownership
   server.tool(
     "check-nft-ownership",
-    "Verify if a specific address owns a particular NFT. Returns boolean result indicating ownership status.",
+    "Check if an address owns a specific NFT",
     {
-      tokenAddress: z.string().describe("The contract address of the NFT collection (e.g., '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' for Bored Ape Yacht Club)"),
-      tokenId: z.string().describe("The ID of the specific NFT token to check ownership for (e.g., '1234')"),
-      ownerAddress: z.string().describe("The wallet address to check ownership against (e.g., '0x1234...')"),
-      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', 'polygon') or chain ID. Most NFTs are on Ethereum mainnet, which is the default.")
+      tokenAddress: z.string().describe("The contract address or ENS name of the NFT collection (e.g., '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' for BAYC or 'boredapeyachtclub.eth')"),
+      tokenId: z.string().describe("The ID of the NFT to check (e.g., '1234')"),
+      ownerAddress: z.string().describe("The wallet address or ENS name to check ownership against (e.g., '0x1234...' or 'vitalik.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
     async ({ tokenAddress, tokenId, ownerAddress, network = "ethereum" }) => {
       try {
         const isOwner = await operations.isNFTOwner(
-          tokenAddress as Address, 
-          ownerAddress as Address,
-          BigInt(tokenId), 
+          tokenAddress,
+          ownerAddress,
+          BigInt(tokenId),
           network
         );
         
@@ -975,11 +1013,12 @@ export function registerEVMTools(server: McpServer) {
           content: [{
             type: "text",
             text: JSON.stringify({
-              contract: tokenAddress,
+              tokenAddress,
               tokenId,
-              owner: ownerAddress,
+              ownerAddress,
               network,
-              isOwner
+              isOwner,
+              result: isOwner ? "Address owns this NFT" : "Address does not own this NFT"
             }, null, 2)
           }]
         };

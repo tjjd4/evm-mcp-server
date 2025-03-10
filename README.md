@@ -33,9 +33,9 @@ The MCP EVM Server leverages the Model Context Protocol to provide blockchain op
 - Transferring tokens (native, ERC20, ERC721, ERC1155)
 - Querying token metadata and balances
 - Chain-specific operations across 30+ EVM networks
-- ENS name resolution for all address parameters
+- **ENS name resolution** for all address parameters (use human-readable names like 'vitalik.eth' instead of addresses)
 
-All operations are exposed through a consistent interface of MCP tools and resources, making it easy for AI agents to discover and use blockchain functionality.
+All operations are exposed through a consistent interface of MCP tools and resources, making it easy for AI agents to discover and use blockchain functionality. **Every tool that accepts Ethereum addresses also supports ENS names**, automatically resolving them to addresses behind the scenes.
 
 ## ✨ Features
 
@@ -46,7 +46,7 @@ All operations are exposed through a consistent interface of MCP tools and resou
 - **Block data** access by number, hash, or latest
 - **Transaction details** and receipts with decoded logs
 - **Address balances** for native tokens and all token standards
-- **ENS resolution** for human-readable Ethereum addresses
+- **ENS resolution** for human-readable Ethereum addresses (use 'vitalik.eth' instead of '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045')
 
 ### Token Operations
 
@@ -197,6 +197,38 @@ bun dev:http
 
 Connect to this MCP server using any MCP-compatible client. For testing and debugging, you can use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector).
 
+### Connecting from Cursor
+
+To connect to the MCP server from Cursor:
+
+1. Open Cursor and go to Settings (gear icon in the bottom left)
+2. Click on "Features" in the left sidebar
+3. Scroll down to "MCP Servers" section
+4. Click "Add new MCP server"
+5. Enter the following details:
+   - Server name: `evm-mcp-server`
+   - Type: `command`
+   - Command: `npx tsx /path/to/mcp-evm-server/src/index.ts`
+   - (Replace with the absolute path to your evm-mcp-server/src/index.ts file)
+
+6. Click "Save"
+
+Once connected, you can use the MCP server's capabilities directly within Cursor. The server will appear in the MCP Servers list and can be enabled/disabled as needed.
+
+### Connecting using Claude CLI
+
+If you're using Claude CLI, you can connect to the MCP server with just two commands:
+
+```bash
+# Add the MCP server
+claude mcp add evm-mcp-server npx tsx /path/to/mcp-evm-server/src/index.ts
+
+# Start Claude with the MCP server enabled
+claude
+```
+
+Replace `/path/to/mcp-evm-server/src/index.ts` with the absolute path to your project's src/index.ts file.
+
 ### Example: Getting a Token Balance with ENS
 
 ```javascript
@@ -221,43 +253,64 @@ console.log(result);
 // }
 ```
 
+### Example: Resolving an ENS Name
+
+```javascript
+// Example of using the MCP client to resolve an ENS name to an address
+const mcp = new McpClient("http://localhost:3000");
+
+const result = await mcp.invokeTool("resolve-ens", {
+  ensName: "vitalik.eth",
+  network: "ethereum"
+});
+
+console.log(result);
+// {
+//   ensName: "vitalik.eth",
+//   normalizedName: "vitalik.eth",
+//   resolvedAddress: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+//   network: "ethereum"
+// }
+```
+
 ## 📚 API Reference
 
 ### Tools
 
-The server provides the following MCP tools for agents:
+The server provides the following MCP tools for agents. **All tools that accept address parameters support both Ethereum addresses and ENS names.**
 
 #### Token Operations
 
 | Tool Name | Description | Key Parameters |
 |-----------|-------------|----------------|
-| `get-token-info` | Get ERC20 token metadata | `tokenAddress`, `network` |
-| `get-token-balance` | Check ERC20 token balance | `tokenAddress`, `ownerAddress`, `network` |
-| `transfer-token` | Transfer ERC20 tokens | `privateKey`, `tokenAddress`, `toAddress`, `amount`, `network` |
-| `approve-token-spending` | Approve token allowances | `privateKey`, `tokenAddress`, `spenderAddress`, `amount`, `network` |
-| `get-nft-info` | Get NFT metadata | `tokenAddress`, `tokenId`, `network` |
-| `check-nft-ownership` | Verify NFT ownership | `tokenAddress`, `tokenId`, `ownerAddress`, `network` |
-| `transfer-nft` | Transfer an NFT | `privateKey`, `tokenAddress`, `tokenId`, `toAddress`, `network` |
-| `get-nft-balance` | Count NFTs owned | `tokenAddress`, `ownerAddress`, `network` |
-| `get-erc1155-token-uri` | Get ERC1155 metadata | `tokenAddress`, `tokenId`, `network` |
-| `get-erc1155-balance` | Check ERC1155 balance | `tokenAddress`, `tokenId`, `ownerAddress`, `network` |
-| `transfer-erc1155` | Transfer ERC1155 tokens | `privateKey`, `tokenAddress`, `tokenId`, `amount`, `toAddress`, `network` |
+| `get-token-info` | Get ERC20 token metadata | `tokenAddress` (address/ENS), `network` |
+| `get-token-balance` | Check ERC20 token balance | `tokenAddress` (address/ENS), `ownerAddress` (address/ENS), `network` |
+| `transfer-token` | Transfer ERC20 tokens | `privateKey`, `tokenAddress` (address/ENS), `toAddress` (address/ENS), `amount`, `network` |
+| `approve-token-spending` | Approve token allowances | `privateKey`, `tokenAddress` (address/ENS), `spenderAddress` (address/ENS), `amount`, `network` |
+| `get-nft-info` | Get NFT metadata | `tokenAddress` (address/ENS), `tokenId`, `network` |
+| `check-nft-ownership` | Verify NFT ownership | `tokenAddress` (address/ENS), `tokenId`, `ownerAddress` (address/ENS), `network` |
+| `transfer-nft` | Transfer an NFT | `privateKey`, `tokenAddress` (address/ENS), `tokenId`, `toAddress` (address/ENS), `network` |
+| `get-nft-balance` | Count NFTs owned | `tokenAddress` (address/ENS), `ownerAddress` (address/ENS), `network` |
+| `get-erc1155-token-uri` | Get ERC1155 metadata | `tokenAddress` (address/ENS), `tokenId`, `network` |
+| `get-erc1155-balance` | Check ERC1155 balance | `tokenAddress` (address/ENS), `tokenId`, `ownerAddress` (address/ENS), `network` |
+| `transfer-erc1155` | Transfer ERC1155 tokens | `privateKey`, `tokenAddress` (address/ENS), `tokenId`, `amount`, `toAddress` (address/ENS), `network` |
 
 #### Blockchain Operations
 
 | Tool Name | Description | Key Parameters |
 |-----------|-------------|----------------|
 | `get-chain-info` | Get network information | `network` |
-| `get-balance` | Get native token balance | `address`, `network` |
-| `transfer-eth` | Send native tokens | `privateKey`, `to`, `amount`, `network` |
+| `get-balance` | Get native token balance | `address` (address/ENS), `network` |
+| `transfer-eth` | Send native tokens | `privateKey`, `to` (address/ENS), `amount`, `network` |
 | `get-transaction` | Get transaction details | `txHash`, `network` |
-| `read-contract` | Read smart contract state | `contractAddress`, `abi`, `functionName`, `args`, `network` |
-| `write-contract` | Write to smart contract | `contractAddress`, `abi`, `functionName`, `args`, `privateKey`, `network` |
-| `is-contract` | Check if address is a contract | `address`, `network` |
+| `read-contract` | Read smart contract state | `contractAddress` (address/ENS), `abi`, `functionName`, `args`, `network` |
+| `write-contract` | Write to smart contract | `contractAddress` (address/ENS), `abi`, `functionName`, `args`, `privateKey`, `network` |
+| `is-contract` | Check if address is a contract | `address` (address/ENS), `network` |
+| `resolve-ens` | Resolve ENS name to address | `ensName`, `network` |
 
 ### Resources
 
-The server exposes blockchain data through the following MCP resource URIs:
+The server exposes blockchain data through the following MCP resource URIs. All resource URIs that accept addresses also support ENS names, which are automatically resolved to addresses.
 
 #### Blockchain Resources
 
