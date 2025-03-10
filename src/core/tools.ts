@@ -18,7 +18,7 @@ export function registerEVMTools(server: McpServer) {
   
   // Get chain information
   server.tool(
-    "get-chain-info",
+    "get_chain_info",
     "Get information about an EVM network",
     {
       network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
@@ -56,7 +56,7 @@ export function registerEVMTools(server: McpServer) {
   
   // Resolve ENS name to address
   server.tool(
-    "resolve-ens",
+    "resolve_ens",
     "Resolve an ENS name to an Ethereum address",
     {
       ensName: z.string().describe("ENS name to resolve (e.g., 'vitalik.eth')"),
@@ -106,7 +106,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Get supported networks
   server.tool(
-    "get-supported-networks",
+    "get_supported_networks",
     "Get a list of supported EVM networks",
     {},
     async () => {
@@ -137,7 +137,7 @@ export function registerEVMTools(server: McpServer) {
   
   // Get block by number
   server.tool(
-    "get-block-by-number",
+    "get_block_by_number",
     "Get a block by its block number",
     {
       blockNumber: z.number().describe("The block number to fetch"),
@@ -167,7 +167,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Get latest block
   server.tool(
-    "get-latest-block",
+    "get_latest_block",
     "Get the latest block from the EVM",
     {
       network: z.string().optional().describe("Network name or chain ID. Defaults to Ethereum mainnet.")
@@ -198,7 +198,7 @@ export function registerEVMTools(server: McpServer) {
   
   // Get ETH balance
   server.tool(
-    "get-balance",
+    "get_balance",
     "Get the native token balance (ETH, MATIC, etc.) for an address", 
     {
       address: z.string().describe("The wallet address or ENS name (e.g., '0x1234...' or 'vitalik.eth') to check the balance for"),
@@ -233,7 +233,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Get ERC20 balance
   server.tool(
-    "get-erc20-balance",
+    "get_erc20_balance",
     "Get the ERC20 token balance of an Ethereum address",
     {
       address: z.string().describe("The Ethereum address to check"),
@@ -277,7 +277,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Get ERC20 token balance
   server.tool(
-    "get-token-balance",
+    "get_token_balance",
     "Get the balance of an ERC20 token for an address",
     {
       tokenAddress: z.string().describe("The contract address or ENS name of the ERC20 token (e.g., '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' for USDC or 'uniswap.eth')"),
@@ -318,7 +318,7 @@ export function registerEVMTools(server: McpServer) {
   
   // Get transaction by hash
   server.tool(
-    "get-transaction",
+    "get_transaction",
     "Get detailed information about a specific transaction by its hash. Includes sender, recipient, value, data, and more.",
     {
       txHash: z.string().describe("The transaction hash to look up (e.g., '0x1234...')"),
@@ -348,7 +348,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Get transaction receipt
   server.tool(
-    "get-transaction-receipt",
+    "get_transaction_receipt",
     "Get a transaction receipt by its hash",
     {
       txHash: z.string().describe("The transaction hash to look up"),
@@ -378,7 +378,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Estimate gas
   server.tool(
-    "estimate-gas",
+    "estimate_gas",
     "Estimate the gas cost for a transaction",
     {
       to: z.string().describe("The recipient address"),
@@ -425,7 +425,7 @@ export function registerEVMTools(server: McpServer) {
   
   // Transfer ETH
   server.tool(
-    "transfer-eth",
+    "transfer_eth",
     "Transfer native tokens (ETH, MATIC, etc.) to an address",
     {
       privateKey: z.string().describe("Private key of the sender account in hex format (with or without 0x prefix). SECURITY: This is used only for transaction signing and is not stored."),
@@ -463,7 +463,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Transfer ERC20
   server.tool(
-    "transfer-erc20",
+    "transfer_erc20",
     "Transfer ERC20 tokens to another address",
     {
       privateKey: z.string().describe("Private key of the sending account (this is used for signing and is never stored)"),
@@ -515,7 +515,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Approve ERC20 token spending
   server.tool(
-    "approve-token-spending",
+    "approve_token_spending",
     "Approve another address (like a DeFi protocol or exchange) to spend your ERC20 tokens. This is often required before interacting with DeFi protocols.",
     {
       privateKey: z.string().describe("Private key of the token owner account in hex format (with or without 0x prefix). SECURITY: This is used only for transaction signing and is not stored."),
@@ -567,7 +567,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Transfer NFT (ERC721)
   server.tool(
-    "transfer-nft",
+    "transfer_nft",
     "Transfer an NFT (ERC721 token) from one address to another. Requires the private key of the current owner for signing the transaction.",
     {
       privateKey: z.string().describe("Private key of the NFT owner account in hex format (with or without 0x prefix). SECURITY: This is used only for transaction signing and is not stored."),
@@ -620,7 +620,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Transfer ERC1155 token
   server.tool(
-    "transfer-erc1155",
+    "transfer_erc1155",
     "Transfer ERC1155 tokens to another address. ERC1155 is a multi-token standard that can represent both fungible and non-fungible tokens in a single contract.",
     {
       privateKey: z.string().describe("Private key of the token owner account in hex format (with or without 0x prefix). SECURITY: This is used only for transaction signing and is not stored."),
@@ -674,7 +674,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Transfer ERC20 tokens
   server.tool(
-    "transfer-token",
+    "transfer_token",
     "Transfer ERC20 tokens to an address",
     {
       privateKey: z.string().describe("Private key of the sender account in hex format (with or without 0x prefix). SECURITY: This is used only for transaction signing and is not stored."),
@@ -723,7 +723,7 @@ export function registerEVMTools(server: McpServer) {
   
   // Read contract
   server.tool(
-    "read-contract",
+    "read_contract",
     "Read data from a smart contract by calling a view/pure function. This doesn't modify blockchain state and doesn't require gas or signing.",
     {
       contractAddress: z.string().describe("The address of the smart contract to interact with"),
@@ -766,7 +766,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Write to contract
   server.tool(
-    "write-contract",
+    "write_contract",
     "Write data to a smart contract by calling a state-changing function. This modifies blockchain state and requires gas payment and transaction signing.",
     {
       contractAddress: z.string().describe("The address of the smart contract to interact with"),
@@ -818,7 +818,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Check if address is a contract
   server.tool(
-    "is-contract",
+    "is_contract",
     "Check if an address is a smart contract or an externally owned account (EOA)",
     {
       address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'uniswap.eth')"),
@@ -853,7 +853,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Get ERC20 token information
   server.tool(
-    "get-token-info",
+    "get_token_info",
     "Get comprehensive information about an ERC20 token including name, symbol, decimals, total supply, and other metadata. Use this to analyze any token on EVM chains.",
     {
       tokenAddress: z.string().describe("The contract address of the ERC20 token (e.g., '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' for USDC on Ethereum)"),
@@ -887,7 +887,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Get ERC20 token balance
   server.tool(
-    "get-token-balance-erc20",
+    "get_token_balance_erc20",
     "Get ERC20 token balance for an address",
     {
       address: z.string().describe("The address to check balance for"),
@@ -931,7 +931,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Get NFT (ERC721) information
   server.tool(
-    "get-nft-info",
+    "get_nft_info",
     "Get detailed information about a specific NFT (ERC721 token), including collection name, symbol, token URI, and current owner if available.",
     {
       tokenAddress: z.string().describe("The contract address of the NFT collection (e.g., '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' for Bored Ape Yacht Club)"),
@@ -992,7 +992,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Check NFT ownership
   server.tool(
-    "check-nft-ownership",
+    "check_nft_ownership",
     "Check if an address owns a specific NFT",
     {
       tokenAddress: z.string().describe("The contract address or ENS name of the NFT collection (e.g., '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' for BAYC or 'boredapeyachtclub.eth')"),
@@ -1036,7 +1036,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Add tool for getting ERC1155 token URI
   server.tool(
-    "get-erc1155-token-uri",
+    "get_erc1155_token_uri",
     "Get the metadata URI for an ERC1155 token (multi-token standard used for both fungible and non-fungible tokens). The URI typically points to JSON metadata about the token.",
     {
       tokenAddress: z.string().describe("The contract address of the ERC1155 token collection (e.g., '0x76BE3b62873462d2142405439777e971754E8E77')"),
@@ -1076,7 +1076,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Add tool for getting ERC721 NFT balance
   server.tool(
-    "get-nft-balance",
+    "get_nft_balance",
     "Get the total number of NFTs owned by an address from a specific collection. This returns the count of NFTs, not individual token IDs.",
     {
       tokenAddress: z.string().describe("The contract address of the NFT collection (e.g., '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D' for Bored Ape Yacht Club)"),
@@ -1116,7 +1116,7 @@ export function registerEVMTools(server: McpServer) {
 
   // Add tool for getting ERC1155 token balance
   server.tool(
-    "get-erc1155-balance",
+    "get_erc1155_balance",
     "Get the balance of a specific ERC1155 token ID owned by an address. ERC1155 allows multiple tokens of the same ID, so the balance can be greater than 1.",
     {
       tokenAddress: z.string().describe("The contract address of the ERC1155 token collection (e.g., '0x76BE3b62873462d2142405439777e971754E8E77')"),

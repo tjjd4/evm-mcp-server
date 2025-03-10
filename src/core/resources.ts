@@ -10,7 +10,7 @@ import type { Address, Hash } from "viem";
 export function registerEVMResources(server: McpServer) {
   // Get EVM info for a specific network
   server.resource(
-    "chain-info-by-network", 
+    "chain_info_by_network", 
     new ResourceTemplate("evm://{network}/chain", { list: undefined }),
     async (uri, params) => {
       try {
@@ -43,7 +43,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Default chain info (Ethereum mainnet)
   server.resource(
-    "ethereum-chain-info", 
+    "ethereum_chain_info", 
     "evm://chain",
     async (uri) => {
       try {
@@ -76,7 +76,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Get block by number for a specific network
   server.resource(
-    "evm-block-by-number",
+    "evm_block_by_number",
     new ResourceTemplate("evm://{network}/block/{blockNumber}", { list: undefined }),
     async (uri, params) => {
       try {
@@ -103,7 +103,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Get block by hash for a specific network
   server.resource(
-    "block-by-hash",
+    "block_by_hash",
     new ResourceTemplate("evm://{network}/block/hash/{blockHash}", { list: undefined }),
     async (uri, params) => {
       try {
@@ -130,7 +130,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Get latest block for a specific network
   server.resource(
-    "evm-latest-block",
+    "evm_latest_block",
     new ResourceTemplate("evm://{network}/block/latest", { list: undefined }),
     async (uri, params) => {
       try {
@@ -156,7 +156,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Default latest block (Ethereum mainnet)
   server.resource(
-    "default-latest-block",
+    "default_latest_block",
     "evm://block/latest",
     async (uri) => {
       try {
@@ -182,7 +182,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Get ETH balance for a specific network
   server.resource(
-    "evm-address-native-balance",
+    "evm_address_native_balance",
     new ResourceTemplate("evm://{network}/address/{address}/balance", { list: undefined }),
     async (uri, params) => {
       try {
@@ -216,7 +216,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Default ETH balance (Ethereum mainnet)
   server.resource(
-    "default-eth-balance",
+    "default_eth_balance",
     new ResourceTemplate("evm://address/{address}/eth-balance", { list: undefined }),
     async (uri, params) => {
       try {
@@ -250,7 +250,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Get ERC20 balance for a specific network
   server.resource(
-    "erc20-balance",
+    "erc20_balance",
     new ResourceTemplate("evm://{network}/address/{address}/token/{tokenAddress}/balance", { list: undefined }),
     async (uri, params) => {
       try {
@@ -292,7 +292,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Default ERC20 balance (Ethereum mainnet)
   server.resource(
-    "default-erc20-balance",
+    "default_erc20_balance",
     new ResourceTemplate("evm://address/{address}/token/{tokenAddress}/balance", { list: undefined }),
     async (uri, params) => {
       try {
@@ -334,7 +334,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Get transaction by hash for a specific network
   server.resource(
-    "evm-transaction-details",
+    "evm_transaction_details",
     new ResourceTemplate("evm://{network}/tx/{txHash}", { list: undefined }),
     async (uri, params) => {
       try {
@@ -361,7 +361,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Default transaction by hash (Ethereum mainnet)
   server.resource(
-    "default-transaction-by-hash",
+    "default_transaction_by_hash",
     new ResourceTemplate("evm://tx/{txHash}", { list: undefined }),
     async (uri, params) => {
       try {
@@ -388,7 +388,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Get supported networks
   server.resource(
-    "supported-networks",
+    "supported_networks",
     "evm://networks",
     async (uri) => {
       try {
@@ -415,7 +415,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Add ERC20 token info resource
   server.resource(
-    "erc20-token-details",
+    "erc20_token_details",
     new ResourceTemplate("evm://{network}/token/{tokenAddress}", { list: undefined }),
     async (uri, params) => {
       try {
@@ -447,7 +447,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Add ERC20 token balance resource
   server.resource(
-    "erc20-token-address-balance",
+    "erc20_token_address_balance",
     new ResourceTemplate("evm://{network}/token/{tokenAddress}/balanceOf/{address}", { list: undefined }),
     async (uri, params) => {
       try {
@@ -484,7 +484,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Add NFT (ERC721) token info resource
   server.resource(
-    "erc721-nft-token-details",
+    "erc721_nft_token_details",
     new ResourceTemplate("evm://{network}/nft/{tokenAddress}/{tokenId}", { list: undefined }),
     async (uri, params) => {
       try {
@@ -530,7 +530,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Add NFT ownership check resource
   server.resource(
-    "erc721-nft-ownership-check",
+    "erc721_nft_ownership_check",
     new ResourceTemplate("evm://{network}/nft/{tokenAddress}/{tokenId}/isOwnedBy/{address}", { list: undefined }),
     async (uri, params) => {
       try {
@@ -566,7 +566,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Add ERC1155 token URI resource
   server.resource(
-    "erc1155-token-metadata-uri",
+    "erc1155_token_metadata_uri",
     new ResourceTemplate("evm://{network}/erc1155/{tokenAddress}/{tokenId}/uri", { list: undefined }),
     async (uri, params) => {
       try {
@@ -600,7 +600,7 @@ export function registerEVMResources(server: McpServer) {
 
   // Add ERC1155 token balance resource
   server.resource(
-    "erc1155-token-address-balance",
+    "erc1155_token_address_balance",
     new ResourceTemplate("evm://{network}/erc1155/{tokenAddress}/{tokenId}/balanceOf/{address}", { list: undefined }),
     async (uri, params) => {
       try {

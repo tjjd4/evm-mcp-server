@@ -8,7 +8,7 @@ import { z } from "zod";
 export function registerEVMPrompts(server: McpServer) {
   // Basic block explorer prompt
   server.prompt(
-    "explore-block",
+    "explore_block",
     "Explore information about a specific block",
     {
       blockNumber: z.string().optional().describe("Block number to explore. If not provided, latest block will be used."),
@@ -29,7 +29,7 @@ export function registerEVMPrompts(server: McpServer) {
 
   // Transaction analysis prompt
   server.prompt(
-    "analyze-transaction",
+    "analyze_transaction",
     "Analyze a specific transaction",
     {
       txHash: z.string().describe("Transaction hash to analyze"),
@@ -48,7 +48,7 @@ export function registerEVMPrompts(server: McpServer) {
 
   // Address analysis prompt
   server.prompt(
-    "analyze-address",
+    "analyze_address",
     "Analyze an EVM address",
     {
       address: z.string().describe("Ethereum address to analyze"),
@@ -67,7 +67,7 @@ export function registerEVMPrompts(server: McpServer) {
 
   // Smart contract interaction guidance
   server.prompt(
-    "interact-with-contract",
+    "interact_with_contract",
     "Get guidance on interacting with a smart contract",
     {
       contractAddress: z.string().describe("The contract address"),
@@ -89,7 +89,7 @@ export function registerEVMPrompts(server: McpServer) {
 
   // EVM concept explanation
   server.prompt(
-    "explain-evm-concept",
+    "explain_evm_concept",
     "Get an explanation of an EVM concept",
     {
       concept: z.string().describe("The EVM concept to explain (e.g., gas, nonce, etc.)")
@@ -107,7 +107,7 @@ export function registerEVMPrompts(server: McpServer) {
 
   // Network comparison
   server.prompt(
-    "compare-networks",
+    "compare_networks",
     "Compare different EVM-compatible networks",
     {
       networkList: z.string().describe("Comma-separated list of networks to compare (e.g., 'ethereum,optimism,arbitrum')")
@@ -128,7 +128,7 @@ export function registerEVMPrompts(server: McpServer) {
 
   // Token analysis prompt
   server.prompt(
-    "analyze-token",
+    "analyze_token",
     "Analyze an ERC20 or NFT token",
     {
       tokenAddress: z.string().describe("Token contract address to analyze"),
