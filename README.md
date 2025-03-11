@@ -171,7 +171,19 @@ These values are hardcoded in the application. If you need to modify them, you c
 
 ## 🚀 Usage
 
-### Running the Server
+### Using npx (No Installation Required)
+
+You can run the MCP EVM Server directly without installation using npx:
+
+```bash
+# Run the server in stdio mode (for CLI tools)
+npx @mcpdotdirect/evm-mcp-server
+
+# Run the server in HTTP mode (for web applications)
+npx @mcpdotdirect/evm-mcp-server --http
+```
+
+### Running the Server Locally
 
 Start the server using stdio (for embedding in CLI tools):
 
@@ -208,12 +220,109 @@ To connect to the MCP server from Cursor:
 5. Enter the following details:
    - Server name: `evm-mcp-server`
    - Type: `command`
-   - Command: `npx tsx /path/to/mcp-evm-server/src/index.ts`
-   - (Replace with the absolute path to your evm-mcp-server/src/index.ts file)
+   - Command: `npx @mcpdotdirect/evm-mcp-server`
 
 6. Click "Save"
 
 Once connected, you can use the MCP server's capabilities directly within Cursor. The server will appear in the MCP Servers list and can be enabled/disabled as needed.
+
+### Using mcp.json with Cursor
+
+For a more portable configuration that you can share with your team or use across projects, you can create an `.cursor/mcp.json` file in your project's root directory:
+
+```json
+{
+  "mcpServers": {
+    "evm-mcp-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mcpdotdirect/evm-mcp-server"
+      ]
+    },
+    "evm-mcp-http": {
+      "command": "npx",
+      "args": [
+        "-y", 
+        "@mcpdotdirect/evm-mcp-server", 
+        "--http"
+      ]
+    }
+  }
+}
+```
+
+Place this file in your project's `.cursor` directory (create it if it doesn't exist), and Cursor will automatically detect and use these MCP server configurations when working in that project. This approach makes it easy to:
+
+1. Share MCP configurations with your team
+2. Version control your MCP setup
+3. Use different server configurations for different projects
+
+### Example: HTTP Mode with SSE
+
+If you're developing a web application and want to connect to the HTTP server with Server-Sent Events (SSE), you can use this configuration:
+
+```json
+{
+  "mcpServers": {
+    "evm-mcp-sse": {
+      "url": "http://localhost:3001/sse"
+    }
+  }
+}
+```
+
+This connects directly to the HTTP server's SSE endpoint, which is useful for:
+- Web applications that need to connect to the MCP server from the browser
+- Environments where running local commands isn't ideal
+- Sharing a single MCP server instance among multiple users or applications
+
+To use this configuration:
+1. Create a `.cursor` directory in your project root if it doesn't exist
+2. Save the above JSON as `mcp.json` in the `.cursor` directory
+3. Restart Cursor or open your project
+4. Cursor will detect the configuration and offer to enable the server(s)
+
+### Example: Using the MCP Server in Cursor
+
+After configuring the MCP server with `mcp.json`, you can easily use it in Cursor. Here's an example workflow:
+
+1. Create a new JavaScript/TypeScript file in your project:
+
+```javascript
+// blockchain-example.js
+async function main() {
+  try {
+    // Get ETH balance for an address using ENS
+    console.log("Getting ETH balance for vitalik.eth...");
+    
+    // When using with Cursor, you can simply ask Cursor to:
+    // "Check the ETH balance of vitalik.eth on mainnet"
+    // Or "Transfer 0.1 ETH from my wallet to vitalik.eth"
+    
+    // Cursor will use the MCP server to execute these operations 
+    // without requiring any additional code from you
+    
+    // This is the power of the MCP integration - your AI assistant
+    // can directly interact with blockchain data and operations
+  } catch (error) {
+    console.error("Error:", error.message);
+  }
+}
+
+main();
+```
+
+2. With the file open in Cursor, you can ask Cursor to:
+
+   - "Check the current ETH balance of vitalik.eth"
+   - "Look up the price of USDC on Ethereum"
+   - "Show me the latest block on Optimism"
+   - "Check if 0x1234... is a contract address"
+
+3. Cursor will use the MCP server to execute these operations and return the results directly in your conversation.
+
+The MCP server handles all the blockchain communication while allowing Cursor to understand and execute blockchain-related tasks through natural language.
 
 ### Connecting using Claude CLI
 
@@ -221,13 +330,11 @@ If you're using Claude CLI, you can connect to the MCP server with just two comm
 
 ```bash
 # Add the MCP server
-claude mcp add evm-mcp-server npx tsx /path/to/mcp-evm-server/src/index.ts
+claude mcp add evm-mcp-server npx @mcpdotdirect/evm-mcp-server
 
 # Start Claude with the MCP server enabled
 claude
 ```
-
-Replace `/path/to/mcp-evm-server/src/index.ts` with the absolute path to your project's src/index.ts file.
 
 ### Example: Getting a Token Balance with ENS
 
