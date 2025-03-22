@@ -113,6 +113,7 @@ All services are exposed through a consistent interface of MCP tools and resourc
 - Zora
 - Aurora
 - Canto
+- Flow
 - Lumia
 
 ### Testnets
@@ -137,6 +138,7 @@ All services are exposed through a consistent interface of MCP tools and resourc
 - Celo Alfajores
 - Goerli
 - Holesky
+- Flow Testnet
 - Lumia Testnet
 
 ## 🛠️ Prerequisites
