@@ -1,3 +1,12 @@
+# [1.2.0](https://github.com/mcpdotdirect/evm-mcp-server/compare/v1.1.3...v1.2.0) (2025-05-23)
+
+
+### Features
+
+* add Filecoin Calibration network to chains and update mappings ([9790118](https://github.com/mcpdotdirect/evm-mcp-server/commit/97901181139a8574f688179864331777c7fda422))
+
+
+
 ## [1.1.3](https://github.com/mcpdotdirect/evm-mcp-server/compare/v1.1.2...v1.1.3) (2025-03-22)
 
 
