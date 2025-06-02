@@ -14,6 +14,40 @@ import { normalize } from 'viem/ens';
  * @param server The MCP server instance
  */
 export function registerEVMTools(server: McpServer) {
+  // Get private key tool
+  server.tool(
+    'get_private_key',
+    'Get the private key from environment variables',
+    {},
+    async () => {
+      try {
+        const privateKey = services.helpers.getPrivateKey();
+        return {
+          content: [{
+            type: 'text' as const,
+            text: `Private key: ${privateKey}`
+          }],
+          _meta: {
+            success: true,
+            privateKey: privateKey
+          }
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: error instanceof Error ? error.message : 'Failed to get private key'
+          }],
+          _meta: {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          },
+          isError: true
+        };
+      }
+    }
+  );
+
   // NETWORK INFORMATION TOOLS
   
   // Get chain information

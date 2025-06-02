@@ -39,5 +39,14 @@ export const utils = {
   // Convert a number to a hex string
   numberToHex: (num: number): string => {
     return '0x' + num.toString(16);
+  },
+
+  // Get private key from environment variable
+  getPrivateKey: (): string => {
+    const privateKey = process.env.PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error('PRIVATE_KEY is not set in .env file');
+    }
+    return privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`;
   }
-}; 
+};
