@@ -4,6 +4,7 @@ import {
   type Hex,
   type ReadContractParameters,
   type GetLogsParameters,
+  type Abi,
   type Log
 } from 'viem';
 import { getPublicClient, getWalletClient } from './clients.js';
@@ -51,3 +52,66 @@ export async function isContract(addressOrEns: string, network = 'ethereum'): Pr
   const code = await client.getBytecode({ address });
   return code !== undefined && code !== '0x';
 } 
+
+
+/**
+ * Get the ABI of a contract for a specific network
+ */
+export async function getContractAbi(addressOrEns: string, network = 'ethereum'): Promise<Abi | undefined> {
+  // Resolve ENS name to address if needed
+  const address = await resolveAddress(addressOrEns, network);
+  
+  // Use etherscan to get the contract ABI
+  const etherscanUrl = `https://api.etherscan.io/v2/api?chainid=1&module=contract&action=getabi&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`;
+
+  const response = await fetch(etherscanUrl);
+  const data = await response.json();
+  
+  if (data.status === '1') {
+    return JSON.parse(data.result);
+  } else {
+    return undefined;
+  }
+}
+
+export async function getContractSourceCode(addressOrEns: string, network = 'ethereum'): Promise<Record<string, string> | string | undefined> {
+  // Resolve ENS name to address if needed
+  const address = await resolveAddress(addressOrEns, network);
+  
+  const etherscanUrl = `https://api.etherscan.io/v2/api?chainid=1&module=contract&action=getsourcecode&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`;
+  const response = await fetch(etherscanUrl);
+  const data = await response.json();
+
+  if (data.status === '1') {
+    
+    let sourceCodeString = data.result[0].SourceCode;
+    
+    if (sourceCodeString.startsWith('{{') && sourceCodeString.endsWith('}}')) {
+      sourceCodeString = sourceCodeString.slice(1, -1);
+
+      try {
+        const sourceCode = JSON.parse(sourceCodeString);
+        if (sourceCode.sources && typeof sourceCode.sources === 'object') {
+          const sourceCodes: Record<string, string> = {};
+          
+          // Iterate through each source file
+          for (const [filePath, sourceInfo] of Object.entries(sourceCode.sources as Record<string, { content: string }>)) {
+            // Extract just the filename without path
+            const fileName = filePath.split('/').pop() || filePath;
+            // Add to result with filename as key and content as value
+            sourceCodes[fileName] = sourceInfo.content;
+          }
+          return sourceCodes;
+        } else {
+          return sourceCode;
+        }
+        } catch (e) {
+          console.error('Failed to parse source code as JSON:', e);
+        }
+    } else {
+      return sourceCodeString;
+    }
+  } else {
+    return undefined;
+  }
+}

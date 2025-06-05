@@ -851,6 +851,99 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+  // Get contract ABI (Ethereum Mainnet only)
+  server.tool(
+    "get_contract_abi",
+    "Get the ABI (Application Binary Interface) of a verified smart contract from Ethereum Mainnet using Etherscan",
+    {
+      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
+    },
+    async ({ address }) => {
+      const network = 'ethereum'; // Hardcoded to Ethereum mainnet
+      
+      try {
+        if (!process.env.ETHERSCAN_API_KEY) {
+          throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
+        }
+
+        const abi = await services.getContractAbi(address, network);
+        
+        if (!abi) {
+          return {
+            content: [{
+              type: 'text',
+              text: `No verified ABI found for contract at ${address} on Ethereum Mainnet`
+            }],
+            isError: true
+          };
+        }
+        
+        const abiString = JSON.stringify(abi, null, 2);
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `ABI for ${address} on Ethereum Mainnet:\n${abiString}`
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Failed to get contract ABI: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_contract_source_code",
+    "Get the source code of a verified smart contract from Ethereum Mainnet using Etherscan",
+    {
+      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
+    },
+    async ({ address }) => {
+      const network = 'ethereum'; // Hardcoded to Ethereum mainnet
+      
+      try {
+        if (!process.env.ETHERSCAN_API_KEY) {
+          throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
+        }
+
+        const code = await services.getContractSourceCode(address, network);
+        
+        if (!code) {
+          return {
+            content: [{
+              type: 'text',
+              text: `No verified code found for contract at ${address} on Ethereum Mainnet`
+            }],
+            isError: true
+          };
+        }
+
+        const entries = Object.entries(code);
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `Code for ${address} on Ethereum Mainnet:\n${JSON.stringify(entries, null, 2)}`
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Failed to get contract code: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  )
+
   // Get ERC20 token information
   server.tool(
     "get_token_info",
