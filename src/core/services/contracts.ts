@@ -101,13 +101,11 @@ export async function getContractSourceCode(addressOrEns: string, network = 'eth
             // Add to result with filename as key and content as value
             sourceCodes[fileName] = sourceInfo.content;
           }
-          return sourceCodes;
-        } else {
-          return sourceCode;
+          return sourceCodes || sourceCode;
         }
-        } catch (e) {
-          console.error('Failed to parse source code as JSON:', e);
-        }
+      } catch (e) {
+        console.error('Failed to parse source code as JSON:', e);
+      }
     } else {
       return sourceCodeString;
     }
