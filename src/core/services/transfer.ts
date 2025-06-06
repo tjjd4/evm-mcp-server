@@ -429,4 +429,80 @@ export async function transferERC1155(
     tokenId: tokenId.toString(),
     amount
   };
-} 
+}
+
+export async function getRecentTransfers(addressOrEns: string, network = 'ethereum'): Promise<JSON[]> {
+  const address = await resolveAddress(addressOrEns, network);
+
+  const client = getPublicClient(network);
+  const latestBlockNumber = await client.getBlockNumber();
+
+  // alchemy_getAssetTransfers (POST /:apiKey)
+  const from_response = await fetch(`https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      "jsonrpc": "2.0",
+      "method": "alchemy_getAssetTransfers",
+      "params": [
+        [
+          "erc20",
+          "erc721",
+          "erc1155"
+        ],
+        "0x0000000000000000000000000000000000000000",
+        latestBlockNumber.toString(),
+        address,
+        null,
+        null,
+        "desc",
+        true
+      ],
+      "id": 1
+    }),
+  });
+
+  const to_response = await fetch(`https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      "jsonrpc": "2.0",
+      "method": "alchemy_getAssetTransfers",
+      "params": [
+        [
+          "erc20",
+          "erc721",
+          "erc1155"
+        ],
+        "0x0000000000000000000000000000000000000000",
+        latestBlockNumber.toString(),
+        null,
+        address,
+        null,
+        "desc",
+        true
+      ],
+      "id": 1
+    }),
+  });
+
+  const from_data = await from_response.json();
+  const to_data = await to_response.json();
+  const transfers: JSON[] = [];
+
+  if (from_data.id === 1 && Array.isArray(from_data.result?.transfers)) {
+    const from_transfers = from_data.result.transfers;
+    transfers.push(...from_transfers);
+  }
+
+  if (to_data.id === 1 && Array.isArray(to_data.result?.transfers)) {
+    const to_transfers = to_data.result.transfers;
+    transfers.push(...to_transfers);
+  }
+
+  return transfers;
+}
