@@ -431,7 +431,7 @@ export async function transferERC1155(
   };
 }
 
-export async function getRecentTransfers(addressOrEns: string, network = 'ethereum'): Promise<JSON[]> {
+export async function getRecentTransfers(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
   const address = await resolveAddress(addressOrEns, network);
 
   const client = getPublicClient(network);
@@ -446,20 +446,14 @@ export async function getRecentTransfers(addressOrEns: string, network = 'ethere
     body: JSON.stringify({
       "jsonrpc": "2.0",
       "method": "alchemy_getAssetTransfers",
-      "params": [
-        [
-          "erc20",
-          "erc721",
-          "erc1155"
-        ],
-        "0x0000000000000000000000000000000000000000",
-        latestBlockNumber.toString(),
-        address,
-        null,
-        null,
-        "desc",
-        true
-      ],
+      "params": {
+        fromBlock: "0x0",
+        toBlock: "latest",
+        toAddress: address,
+        category: ["erc20", "erc1155"],
+        order: "desc",
+        withMetadata: true
+      },
       "id": 1
     }),
   });
@@ -472,20 +466,14 @@ export async function getRecentTransfers(addressOrEns: string, network = 'ethere
     body: JSON.stringify({
       "jsonrpc": "2.0",
       "method": "alchemy_getAssetTransfers",
-      "params": [
-        [
-          "erc20",
-          "erc721",
-          "erc1155"
-        ],
-        "0x0000000000000000000000000000000000000000",
-        latestBlockNumber.toString(),
-        null,
-        address,
-        null,
-        "desc",
-        true
-      ],
+      "params": {
+        fromBlock: "0x0",
+        toBlock: "latest",
+        fromAddress: address,
+        category: ["erc20", "erc1155"],
+        order: "desc",
+        withMetadata: true
+      },
       "id": 1
     }),
   });
@@ -494,12 +482,12 @@ export async function getRecentTransfers(addressOrEns: string, network = 'ethere
   const to_data = await to_response.json();
   const transfers: JSON[] = [];
 
-  if (from_data.id === 1 && Array.isArray(from_data.result?.transfers)) {
+  if (!(from_data.error) && Array.isArray(from_data.result?.transfers)) {
     const from_transfers = from_data.result.transfers;
     transfers.push(...from_transfers);
   }
 
-  if (to_data.id === 1 && Array.isArray(to_data.result?.transfers)) {
+  if (!(to_data.error) && Array.isArray(to_data.result?.transfers)) {
     const to_transfers = to_data.result.transfers;
     transfers.push(...to_transfers);
   }

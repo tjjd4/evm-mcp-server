@@ -315,39 +315,6 @@ export function registerEVMTools(server: McpServer) {
   );
 
   // TRANSACTION TOOLS
-  // Get recent transactions
-  server.tool(
-    "get_recent_transactions",
-    "Get recent transactions for an address",
-    {
-      address: z.string().describe("The wallet address or ENS name to check the balance for (e.g., '0x1234...' or 'vitalik.eth')"),
-    },
-    async ({ address }) => {
-      const network = 'ethereum';
-      try {
-        const transfers = await services.getRecentTransfers(address, network);
-        
-        return {
-          content: [{
-            type: "text",
-            text: services.helpers.formatJson({
-              "address": address,
-              "network": network,
-              "transfers": services.helpers.formatJson(transfers),
-            }),
-          }]
-        };
-      } catch (error) {
-        return {
-          content: [{
-            type: "text",
-            text: `Error fetching recent transactions for ${address}: ${error instanceof Error ? error.message : String(error)}`
-          }],
-          isError: true
-        };
-      }
-    }
-  );
   
   // Get transaction by hash
   server.tool(
@@ -455,6 +422,54 @@ export function registerEVMTools(server: McpServer) {
   );
 
   // TRANSFER TOOLS
+
+  // Get recent transfers
+  server.tool(
+    "get_recent_transfers",
+    "Get recent transfers for an address of ERC20 and ERC1155 tokens",
+    {
+      address: z.string().describe("The wallet address or ENS name to check the balance for (e.g., '0x1234...' or 'vitalik.eth')"),
+    },
+    async ({ address }) => {
+      const network = 'ethereum';
+      try {
+        const transfers = await services.getRecentTransfers(address.trim(), network);
+        const transfer_records: any[] = [];
+        transfers.forEach((tx, index) => {
+          transfer_records.push({
+            index: index + 1,
+            contractAddress: tx.raw?.address,
+            symbol: tx.asset,
+            decimal: tx.decimal,
+            amount: tx.value,
+            from: tx.from,
+            to: tx.to,
+            blockNumber: tx.blockNum,
+            blockTimestamp: tx.metadata?.blockTimestamp,
+            transactionHash: tx.hash,
+          });
+        });
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson({
+              "address": address,
+              "network": network,
+              "transfers": transfer_records,
+            }),
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching recent transactions for ${address}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
   
   // Transfer ETH
   server.tool(
