@@ -438,7 +438,7 @@ export function registerEVMTools(server: McpServer) {
         transfers.forEach((tx, index) => {
           transfer_records.push({
             index: index + 1,
-            contractAddress: tx.raw?.address,
+            contractAddress: tx.rawContract?.address!,
             symbol: tx.asset,
             decimal: tx.decimal,
             amount: tx.value,
