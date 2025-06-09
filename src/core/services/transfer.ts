@@ -450,7 +450,7 @@ export async function getRecentTransfers(addressOrEns: string, network = 'ethere
         fromBlock: "0x0",
         toBlock: "latest",
         toAddress: address,
-        category: ["erc20", "erc1155"],
+        category: ["erc20", "erc1155", "external"],
         order: "desc",
         withMetadata: true
       },
@@ -470,7 +470,7 @@ export async function getRecentTransfers(addressOrEns: string, network = 'ethere
         fromBlock: "0x0",
         toBlock: "latest",
         fromAddress: address,
-        category: ["erc20", "erc1155"],
+        category: ["erc20", "erc1155", "external", "internal"],
         order: "desc",
         withMetadata: true
       },
