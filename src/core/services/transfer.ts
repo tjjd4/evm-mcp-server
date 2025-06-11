@@ -9,6 +9,14 @@ import {
   getContract,
   type Account
 } from 'viem';
+import {
+  Network,
+  Alchemy,
+  AssetTransfersCategory,
+  SortingOrder,
+  type AssetTransfersWithMetadataResponse,
+  type AssetTransfersWithMetadataResult
+} from 'alchemy-sdk';
 import { getPublicClient, getWalletClient } from './clients.js';
 import { getChain } from '../chains.js';
 import { resolveAddress } from './ens.js';
@@ -431,65 +439,45 @@ export async function transferERC1155(
   };
 }
 
-export async function getRecentTransfers(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
+export async function getRecentTransfers(addressOrEns: string, network = 'ethereum'): Promise<AssetTransfersWithMetadataResult[]> {
   const address = await resolveAddress(addressOrEns, network);
 
   const client = getPublicClient(network);
-  const latestBlockNumber = await client.getBlockNumber();
 
-  // alchemy_getAssetTransfers (POST /:apiKey)
-  const from_response = await fetch(`https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      "jsonrpc": "2.0",
-      "method": "alchemy_getAssetTransfers",
-      "params": {
-        fromBlock: "0x0",
-        toBlock: "latest",
-        toAddress: address,
-        category: ["erc20", "erc1155", "external"],
-        order: "desc",
-        withMetadata: true
-      },
-      "id": 1
-    }),
+  const config = {
+    apiKey: process.env.ALCHEMY_API_KEY,
+    network: Network.ETH_MAINNET,
+  };
+  const alchemy = new Alchemy(config);
+
+  const from_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
+    fromBlock: "0x0",
+    fromAddress: address,
+    excludeZeroValue: false,
+    category: [AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721, AssetTransfersCategory.ERC1155, AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
+    order: SortingOrder.DESCENDING,
+    withMetadata: true
   });
 
-  const to_response = await fetch(`https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      "jsonrpc": "2.0",
-      "method": "alchemy_getAssetTransfers",
-      "params": {
-        fromBlock: "0x0",
-        toBlock: "latest",
-        fromAddress: address,
-        category: ["erc20", "erc1155", "external", "internal"],
-        order: "desc",
-        withMetadata: true
-      },
-      "id": 1
-    }),
+  const to_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
+    fromBlock: "0x0",
+    toAddress: address,
+    excludeZeroValue: false,
+    category: [AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721, AssetTransfersCategory.ERC1155, AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
+    order: SortingOrder.DESCENDING,
+    withMetadata: true
   });
 
-  const from_data = await from_response.json();
-  const to_data = await to_response.json();
-  const transfers: JSON[] = [];
+  const from_data = await from_response;
+  const to_data = await to_response;
+  const transfers: AssetTransfersWithMetadataResult[] = [];
 
-  if (!(from_data.error) && Array.isArray(from_data.result?.transfers)) {
-    const from_transfers = from_data.result.transfers;
-    transfers.push(...from_transfers);
+  if (from_data.transfers.length > 0) {
+    transfers.push(...from_data.transfers);
   }
 
-  if (!(to_data.error) && Array.isArray(to_data.result?.transfers)) {
-    const to_transfers = to_data.result.transfers;
-    transfers.push(...to_transfers);
+  if (to_data.transfers.length > 0) {
+    transfers.push(...to_data.transfers);
   }
 
   return transfers;

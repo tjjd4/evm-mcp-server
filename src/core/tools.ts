@@ -434,28 +434,25 @@ export function registerEVMTools(server: McpServer) {
       const network = 'ethereum';
       try {
         const transfers = await services.getRecentTransfers(address.trim(), network);
-        const transfer_records: any[] = [];
-        transfers.forEach((tx, index) => {
-          transfer_records.push({
-            index: index + 1,
-            contractAddress: tx.rawContract?.address!,
-            symbol: tx.asset,
-            decimal: tx.decimal,
-            amount: tx.value,
-            from: tx.from,
-            to: tx.to,
-            blockNumber: tx.blockNum,
-            blockTimestamp: tx.metadata?.blockTimestamp,
-            transactionHash: tx.hash,
-          });
+        const flattened = transfers.map(({ rawContract, metadata, ...rest }) => ({
+          ...rest,
+          contractAddress: rawContract?.address || null,
+          blockTimestamp: metadata?.blockTimestamp || null,
+        }));
+
+        const sorted = flattened.sort((a, b) => {
+          const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
+          const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
+          return bTime - aTime;
         });
+
         return {
           content: [{
             type: "text",
             text: services.helpers.formatJson({
-              "address": address,
-              "network": network,
-              "transfers": transfer_records,
+              address,
+              network,
+              transfers: sorted,
             }),
           }]
         };
