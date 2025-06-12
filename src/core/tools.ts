@@ -422,51 +422,6 @@ export function registerEVMTools(server: McpServer) {
   );
 
   // TRANSFER TOOLS
-
-  // Get transfers history
-  server.tool(
-    "get_transfers_history",
-    "Get transfers history for an address of ERC20 and ERC1155 tokens",
-    {
-      address: z.string().describe("The wallet address or ENS name to check the balance for (e.g., '0x1234...' or 'vitalik.eth')"),
-    },
-    async ({ address }) => {
-      const network = 'ethereum';
-      try {
-        const transfers = await services.getTransfersHistory(address.trim(), network);
-        const flattened = transfers.map(({ rawContract, metadata, ...rest }) => ({
-          ...rest,
-          contractAddress: rawContract?.address || null,
-          blockTimestamp: metadata?.blockTimestamp || null,
-        }));
-
-        const sorted = flattened.sort((a, b) => {
-          const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
-          const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
-          return bTime - aTime;
-        });
-
-        return {
-          content: [{
-            type: "text",
-            text: services.helpers.formatJson({
-              address,
-              network,
-              transfers: sorted,
-            }),
-          }]
-        };
-      } catch (error) {
-        return {
-          content: [{
-            type: "text",
-            text: `Error fetching recent transactions for ${address}: ${error instanceof Error ? error.message : String(error)}`
-          }],
-          isError: true
-        };
-      }
-    }
-  );
   
   // Transfer ETH
   server.tool(
@@ -896,99 +851,6 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
-  // Get contract ABI (Ethereum Mainnet only)
-  server.tool(
-    "get_contract_abi",
-    "Get the ABI (Application Binary Interface) of a verified smart contract from Ethereum Mainnet using Etherscan",
-    {
-      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
-    },
-    async ({ address }) => {
-      const network = 'ethereum'; // Hardcoded to Ethereum mainnet
-      
-      try {
-        if (!process.env.ETHERSCAN_API_KEY) {
-          throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
-        }
-
-        const abi = await services.getContractAbi(address, network);
-        
-        if (!abi) {
-          return {
-            content: [{
-              type: 'text',
-              text: `No verified ABI found for contract at ${address} on Ethereum Mainnet`
-            }],
-            isError: true
-          };
-        }
-        
-        const abiString = JSON.stringify(abi, null, 2);
-        
-        return {
-          content: [{
-            type: 'text',
-            text: `ABI for ${address} on Ethereum Mainnet:\n${abiString}`
-          }],
-        };
-      } catch (error) {
-        return {
-          content: [{
-            type: 'text',
-            text: `Failed to get contract ABI: ${error instanceof Error ? error.message : 'Unknown error'}`
-          }],
-          isError: true
-        };
-      }
-    }
-  );
-
-  server.tool(
-    "get_contract_source_code",
-    "Get the source code of a verified smart contract from Ethereum Mainnet using Etherscan",
-    {
-      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
-    },
-    async ({ address }) => {
-      const network = 'ethereum'; // Hardcoded to Ethereum mainnet
-      
-      try {
-        if (!process.env.ETHERSCAN_API_KEY) {
-          throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
-        }
-
-        const code = await services.getContractSourceCode(address, network);
-        
-        if (!code) {
-          return {
-            content: [{
-              type: 'text',
-              text: `No verified code found for contract at ${address} on Ethereum Mainnet`
-            }],
-            isError: true
-          };
-        }
-
-        const entries = Object.entries(code);
-        
-        return {
-          content: [{
-            type: 'text',
-            text: `Code for ${address} on Ethereum Mainnet:\n${JSON.stringify(entries, null, 2)}`
-          }],
-        };
-      } catch (error) {
-        return {
-          content: [{
-            type: 'text',
-            text: `Failed to get contract code: ${error instanceof Error ? error.message : 'Unknown error'}`
-          }],
-          isError: true
-        };
-      }
-    }
-  )
-
   // Get ERC20 token information
   server.tool(
     "get_token_info",
@@ -1331,4 +1193,191 @@ export function registerEVMTools(server: McpServer) {
       }
     }
   );
-} 
+
+  // NEW TOOLS
+
+  // Get contract ABI (Ethereum Mainnet only)
+  server.tool(
+    "get_contract_abi",
+    "Get the ABI (Application Binary Interface) of a verified smart contract from Ethereum Mainnet using Etherscan",
+    {
+      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
+    },
+    async ({ address }) => {
+      const network = 'ethereum'; // Hardcoded to Ethereum mainnet
+      
+      try {
+        if (!process.env.ETHERSCAN_API_KEY) {
+          throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
+        }
+
+        const abi = await services.getContractAbi(address, network);
+        
+        if (!abi) {
+          return {
+            content: [{
+              type: 'text',
+              text: `No verified ABI found for contract at ${address} on Ethereum Mainnet`
+            }],
+            isError: true
+          };
+        }
+        
+        const abiString = JSON.stringify(abi, null, 2);
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `ABI for ${address} on Ethereum Mainnet:\n${abiString}`
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Failed to get contract ABI: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_contract_source_code",
+    "Get the source code of a verified smart contract from Ethereum Mainnet using Etherscan",
+    {
+      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
+    },
+    async ({ address }) => {
+      const network = 'ethereum'; // Hardcoded to Ethereum mainnet
+      
+      try {
+        if (!process.env.ETHERSCAN_API_KEY) {
+          throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
+        }
+
+        const code = await services.getContractSourceCode(address, network);
+        
+        if (!code) {
+          return {
+            content: [{
+              type: 'text',
+              text: `No verified code found for contract at ${address} on Ethereum Mainnet`
+            }],
+            isError: true
+          };
+        }
+
+        const entries = Object.entries(code);
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `Code for ${address} on Ethereum Mainnet:\n${JSON.stringify(entries, null, 2)}`
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Failed to get contract code: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Get transfers history
+  server.tool(
+    "get_transfers_history",
+    "Get transfers history for an address including ERC20, ERC721 and ERC1155 tokens",
+    {
+      address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'uniswap.eth')"),
+    },
+    async ({ address }) => {
+      const network = 'ethereum';
+      try {
+        const transfers = await services.getTransfersHistory(address.trim(), network);
+        const flattened = transfers.map(({ rawContract, metadata, ...rest }) => ({
+          ...rest,
+          contractAddress: rawContract?.address || null,
+          blockTimestamp: metadata?.blockTimestamp || null,
+        }));
+
+        const sorted = flattened.sort((a, b) => {
+          const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
+          const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
+          return bTime - aTime;
+        });
+
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson({
+              amount: sorted.length,
+              address,
+              network,
+              transfers: sorted,
+            }),
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching recent transfers for ${address}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Get transactions history
+  server.tool(
+    "get_transactions_history",
+    "Get all transactions history for an address, including ERC20, ERC721, ERC1155, external, and internal transfers. Uses Alchemy for Ethereum mainnet.",
+    {
+      address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'vitalik.eth')"),
+    },
+    async ({ address }) => {
+      const network = 'ethereum';
+      try {
+        const transactions = await services.getTransactionsHistory(address.trim() as Address, network);
+        const flattened = transactions.map(({ rawContract, metadata, ...rest }) => ({
+          ...rest,
+          contractAddress: rawContract?.address || null,
+          blockTimestamp: metadata?.blockTimestamp || null,
+        }));
+
+        const sorted = flattened.sort((a, b) => {
+          const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
+          const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
+          return bTime - aTime;
+        });
+
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson({
+              amount: sorted.length,
+              address,
+              network,
+              transactions: sorted,
+            })
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching transactions history for ${address}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+}
