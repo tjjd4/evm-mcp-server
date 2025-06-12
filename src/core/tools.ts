@@ -423,17 +423,17 @@ export function registerEVMTools(server: McpServer) {
 
   // TRANSFER TOOLS
 
-  // Get recent transfers
+  // Get transfers history
   server.tool(
-    "get_recent_transfers",
-    "Get recent transfers for an address of ERC20 and ERC1155 tokens",
+    "get_transfers_history",
+    "Get transfers history for an address of ERC20 and ERC1155 tokens",
     {
       address: z.string().describe("The wallet address or ENS name to check the balance for (e.g., '0x1234...' or 'vitalik.eth')"),
     },
     async ({ address }) => {
       const network = 'ethereum';
       try {
-        const transfers = await services.getRecentTransfers(address.trim(), network);
+        const transfers = await services.getTransfersHistory(address.trim(), network);
         const flattened = transfers.map(({ rawContract, metadata, ...rest }) => ({
           ...rest,
           contractAddress: rawContract?.address || null,

@@ -439,7 +439,7 @@ export async function transferERC1155(
   };
 }
 
-export async function getRecentTransfers(addressOrEns: string, network = 'ethereum'): Promise<AssetTransfersWithMetadataResult[]> {
+export async function getTransfersHistory(addressOrEns: string, network = 'ethereum'): Promise<AssetTransfersWithMetadataResult[]> {
   const address = await resolveAddress(addressOrEns, network);
 
   const client = getPublicClient(network);
@@ -454,7 +454,7 @@ export async function getRecentTransfers(addressOrEns: string, network = 'ethere
     fromBlock: "0x0",
     fromAddress: address,
     excludeZeroValue: false,
-    category: [AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721, AssetTransfersCategory.ERC1155, AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
+    category: [AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721, AssetTransfersCategory.ERC1155],
     order: SortingOrder.DESCENDING,
     withMetadata: true
   });
@@ -463,7 +463,7 @@ export async function getRecentTransfers(addressOrEns: string, network = 'ethere
     fromBlock: "0x0",
     toAddress: address,
     excludeZeroValue: false,
-    category: [AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721, AssetTransfersCategory.ERC1155, AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
+    category: [AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721, AssetTransfersCategory.ERC1155],
     order: SortingOrder.DESCENDING,
     withMetadata: true
   });
