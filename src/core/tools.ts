@@ -1380,4 +1380,47 @@ export function registerEVMTools(server: McpServer) {
       }
     }
   );
+
+  server.tool(
+    "get_function_name_args_from_input",
+    "Get the function name and arguments from a transaction input",
+    {
+      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')"),
+      input: z.string().describe("The transaction input data (calldata)"),
+    },
+    async ({ address, input }) => {
+      try {
+        const abi = await services.getContractAbi(address);
+        if (!abi) {
+          throw new Error(`Could not retrieve ABI for contract: ${address}`);
+        }
+
+        const result = await services.getFunctionNameAndArgsFromInput(abi, input);
+        if (result) {
+          return {
+            content: [{
+              type: "text",
+              text: `Function name: ${result.functionName}\nArguments: ${services.helpers.formatJson(result.args)}`
+            }]
+          };
+        } else {
+          return {
+            content: [{
+              type: "text",
+              text: `No matching function found for input: ${input}`
+            }],
+            isError: true
+          };
+        }
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching function name and args: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
 }

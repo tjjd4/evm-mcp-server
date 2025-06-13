@@ -1,5 +1,6 @@
 import { 
-  type Address, 
+  decodeFunctionData,
+  type Address,
   type Hash, 
   type Hex,
   type ReadContractParameters,
@@ -112,4 +113,24 @@ export async function getContractSourceCode(addressOrEns: string, network = 'eth
   } else {
     return undefined;
   }
+}
+
+export async function getFunctionNameAndArgsFromInput(abi: Abi, input: string | Hex, network = 'ethereum'): Promise<{ functionName: string; args: readonly unknown[] | undefined } | undefined> {
+  try {
+    // If input is a string and does not start with '0x', convert it to hex
+    if (typeof input === 'string' && !input.startsWith('0x')) {
+      // Convert string to hex
+      input = '0x' + Buffer.from(input, 'utf8').toString('hex');
+    }
+    const { functionName, args } = decodeFunctionData({
+      abi,
+      data: input as Hex,
+    });
+    if (functionName) {
+      return { functionName, args };
+    }
+  } catch (error) {
+    console.error('Failed to decode function signature:', error);
+  }
+  return undefined;
 }
