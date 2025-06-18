@@ -10,6 +10,7 @@ import {
 } from 'viem';
 import { getPublicClient, getWalletClient } from './clients.js';
 import { resolveAddress } from './ens.js';
+import { getTransaction } from './transactions.js';
 
 /**
  * Read from a contract for a specific network
@@ -115,22 +116,29 @@ export async function getContractSourceCode(addressOrEns: string, network = 'eth
   }
 }
 
-export async function getFunctionNameAndArgsFromInput(abi: Abi, input: string | Hex, network = 'ethereum'): Promise<{ functionName: string; args: readonly unknown[] | undefined } | undefined> {
+export async function getFunctionNameAndArgsFromTx(addressOrEns: string, hash: Hash, network = 'ethereum'): Promise<{ functionName: string; args: readonly unknown[] | undefined } | undefined> {
   try {
-    // If input is a string and does not start with '0x', convert it to hex
-    if (typeof input === 'string' && !input.startsWith('0x')) {
-      // Convert string to hex
-      input = '0x' + Buffer.from(input, 'utf8').toString('hex');
+    const abi = await getContractAbi(addressOrEns);
+    if (!abi) {
+      throw new Error(`Could not retrieve ABI for contract: ${addressOrEns}`);
     }
+
+    const tx = await getTransaction(hash, network);
+    if (!tx) {
+      throw new Error(`Failed to get transaction input: ${hash}`);
+    }
+
     const { functionName, args } = decodeFunctionData({
       abi,
-      data: input as Hex,
+      data: tx.input as Hex,
     });
-    if (functionName) {
-      return { functionName, args };
+
+    if (!functionName) {
+      throw new Error(`Failed to decode function signature: ${hash}`);
     }
+    return { functionName, args };
   } catch (error) {
     console.error('Failed to decode function signature:', error);
+    return undefined;
   }
-  return undefined;
 }

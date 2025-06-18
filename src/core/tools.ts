@@ -1382,20 +1382,15 @@ export function registerEVMTools(server: McpServer) {
   );
 
   server.tool(
-    "get_function_name_args_from_input",
-    "Get the function name and arguments from a transaction input",
+    "get_function_name_args_from_tx",
+    "Get the function name and arguments from the transaction input",
     {
       address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')"),
-      input: z.string().describe("The transaction input data (calldata)"),
+      txHash: z.string().describe("The transaction hash"),
     },
-    async ({ address, input }) => {
+    async ({ address, txHash }) => {
       try {
-        const abi = await services.getContractAbi(address);
-        if (!abi) {
-          throw new Error(`Could not retrieve ABI for contract: ${address}`);
-        }
-
-        const result = await services.getFunctionNameAndArgsFromInput(abi, input);
+        const result = await services.getFunctionNameAndArgsFromTx(address, txHash as Hash);
         if (result) {
           return {
             content: [{
@@ -1407,7 +1402,7 @@ export function registerEVMTools(server: McpServer) {
           return {
             content: [{
               type: "text",
-              text: `No matching function found for input: ${input}`
+              text: `No matching function found for transaction: ${txHash}`
             }],
             isError: true
           };
@@ -1417,6 +1412,33 @@ export function registerEVMTools(server: McpServer) {
           content: [{
             type: "text",
             text: `Error fetching function name and args: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_transaction_trace",
+    "Get the detail transaction trace for a specific transaction",
+    {
+      txHash: z.string().describe("The transaction hash"),
+    },
+    async ({ txHash }) => {
+      try {
+        const trace = await services.getTransactionTrace(txHash as Hash);
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson(trace)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching transaction trace: ${error instanceof Error ? error.message : String(error)}`
           }],
           isError: true
         };

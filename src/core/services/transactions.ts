@@ -103,3 +103,45 @@ export async function getTransactionsHistory(addressOrEns: string, network = 'et
   
     return transfers;
 }
+
+export async function getTransactionTrace(hash: Hash, network = 'ethereum'): Promise<any> {
+    if (!process.env.TENDERLY_NODE_RPC_KEY) {
+        throw new Error('TENDERLY_NODE_RPC_KEY is not set in environment variables');
+    }
+
+    if (!/^0x([A-Fa-f0-9]{64})$/.test(hash)) {
+        throw new Error('Invalid transaction hash format');
+    }
+
+    const url = `https://mainnet.gateway.tenderly.co/${process.env.TENDERLY_NODE_RPC_KEY}`;
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                id: 0,
+                method: 'tenderly_traceTransaction',
+                params: [hash]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Tenderly API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(`Tenderly API error: ${data.error.message || 'Unknown error'}`);
+        }
+
+        return data.result;
+    } catch (error) {
+        console.error('Error fetching transaction trace:', error);
+        throw new Error(`Failed to fetch transaction trace: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+}
