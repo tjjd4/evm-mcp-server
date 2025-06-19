@@ -41,7 +41,7 @@ export function registerEVMPrompts(server: McpServer) {
         role: "user",
         content: {
           type: "text",
-          text: `Please analyze transaction ${txHash} on the ${network} network and provide a detailed explanation of what this transaction does, who the parties involved are, the amount transferred (if applicable), gas used, and any other relevant information.`
+          text: `Please analyze transaction ${txHash} on the ${network} network and provide a detailed explanation of what this transaction does, who the parties involved are, the amount transferred (if applicable), gas used, and any other relevant information. If the transaction is a contract interaction, please try to get the contract's source code for better explanation about the transaction intent.`
         }
       }]
     })
@@ -175,8 +175,8 @@ export function registerEVMPrompts(server: McpServer) {
           content: {
             type: "text",
             text: abiJson
-              ? `Please analyze the smart contract at address ${contractAddress} on the ${network} network. Here is the ABI:\n\n${abiJson}\n\nProvide a brief usage and overview of this smart contract and a detailed explanation of its functions, events, and any potential security issues or vulnerabilities. If possible, explain how this contract interacts with other contracts or tokens.`
-              : `Please analyze the smart contract at address ${contractAddress} on the ${network} network. Provide a brief usage and overview of this smart contract and a detailed explanation of its functions, events, and any potential security issues or vulnerabilities. If possible, explain how this contract interacts with other contracts or tokens.`
+              ? `Please analyze the smart contract at address ${contractAddress} on the ${network} network. Here is the ABI:\n\n${abiJson}\n\nProvide a brief usage and overview of this smart contract and a detailed explanation of its functions, events, and any potential security issues or vulnerabilities. Please try to get the smart contract's source code. If possible, explain how this contract interacts with other contracts or tokens.`
+              : `Please analyze the smart contract at address ${contractAddress} on the ${network} network. Provide a brief usage and overview of this smart contract and a detailed explanation of its functions, events, and any potential security issues or vulnerabilities. Please try to get the smart contract's source code. If possible, explain how this contract interacts with other contracts or tokens.`
           }
         }]
       };
