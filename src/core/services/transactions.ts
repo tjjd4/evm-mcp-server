@@ -63,85 +63,85 @@ export async function getChainId(network = 'ethereum'): Promise<number> {
 export async function getTransactionsHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
   const address = await resolveAddress(addressOrEns, network);
   
-    const client = getPublicClient(network);
-  
-    const config = {
-      apiKey: process.env.ALCHEMY_API_KEY,
-      network: Network.ETH_MAINNET,
-    };
-    const alchemy = new Alchemy(config);
-  
-    const from_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
-      fromBlock: "0x0",
-      fromAddress: address,
-      excludeZeroValue: false,
-      category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
-      order: SortingOrder.DESCENDING,
-      withMetadata: true
-    });
-  
-    const to_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
-      fromBlock: "0x0",
-      toAddress: address,
-      excludeZeroValue: false,
-      category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
-      order: SortingOrder.DESCENDING,
-      withMetadata: true
-    });
-  
-    const from_data = await from_response;
-    const to_data = await to_response;
-    const transfers: AssetTransfersWithMetadataResult[] = [];
-  
-    if (from_data.transfers.length > 0) {
-      transfers.push(...from_data.transfers);
-    }
-  
-    if (to_data.transfers.length > 0) {
-      transfers.push(...to_data.transfers);
-    }
-  
-    return transfers;
+  const client = getPublicClient(network);
+
+  const config = {
+    apiKey: process.env.ALCHEMY_API_KEY,
+    network: Network.ETH_MAINNET,
+  };
+  const alchemy = new Alchemy(config);
+
+  const from_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
+    fromBlock: "0x0",
+    fromAddress: address,
+    excludeZeroValue: false,
+    category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
+    order: SortingOrder.DESCENDING,
+    withMetadata: true
+  });
+
+  const to_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
+    fromBlock: "0x0",
+    toAddress: address,
+    excludeZeroValue: false,
+    category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
+    order: SortingOrder.DESCENDING,
+    withMetadata: true
+  });
+
+  const from_data = await from_response;
+  const to_data = await to_response;
+  const transfers: AssetTransfersWithMetadataResult[] = [];
+
+  if (from_data.transfers.length > 0) {
+    transfers.push(...from_data.transfers);
+  }
+
+  if (to_data.transfers.length > 0) {
+    transfers.push(...to_data.transfers);
+  }
+
+  return transfers;
 }
 
 export async function getTransactionTrace(hash: Hash, network = 'ethereum'): Promise<any> {
-    if (!process.env.TENDERLY_NODE_RPC_KEY) {
-        throw new Error('TENDERLY_NODE_RPC_KEY is not set in environment variables');
+  if (!process.env.TENDERLY_NODE_RPC_KEY) {
+      throw new Error('TENDERLY_NODE_RPC_KEY is not set in environment variables');
+  }
+
+  if (!/^0x([A-Fa-f0-9]{64})$/.test(hash)) {
+      throw new Error('Invalid transaction hash format');
+  }
+
+  const url = `https://mainnet.gateway.tenderly.co/${process.env.TENDERLY_NODE_RPC_KEY}`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 0,
+        method: 'tenderly_traceTransaction',
+        params: [hash]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Tenderly API request failed with status ${response.status}`);
     }
 
-    if (!/^0x([A-Fa-f0-9]{64})$/.test(hash)) {
-        throw new Error('Invalid transaction hash format');
-    }
-
-    const url = `https://mainnet.gateway.tenderly.co/${process.env.TENDERLY_NODE_RPC_KEY}`;
+    const data = await response.json();
     
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 0,
-                method: 'tenderly_traceTransaction',
-                params: [hash]
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Tenderly API request failed with status ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(`Tenderly API error: ${data.error.message || 'Unknown error'}`);
-        }
-
-        return data.result;
-    } catch (error) {
-        console.error('Error fetching transaction trace:', error);
-        throw new Error(`Failed to fetch transaction trace: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    if (data.error) {
+      throw new Error(`Tenderly API error: ${data.error.message || 'Unknown error'}`);
     }
+
+    return data.result;
+  } catch (error) {
+    console.error('Error fetching transaction trace:', error);
+    throw new Error(`Failed to fetch transaction trace: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }

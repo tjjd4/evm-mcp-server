@@ -1389,8 +1389,9 @@ export function registerEVMTools(server: McpServer) {
       txHash: z.string().describe("The transaction hash"),
     },
     async ({ address, txHash }) => {
+      const network = 'ethereum';
       try {
-        const result = await services.getFunctionNameAndArgsFromTx(address, txHash as Hash);
+        const result = await services.getFunctionNameAndArgsFromTx(address, txHash as Hash, network);
         if (result) {
           return {
             content: [{
@@ -1426,8 +1427,9 @@ export function registerEVMTools(server: McpServer) {
       txHash: z.string().describe("The transaction hash"),
     },
     async ({ txHash }) => {
+      const network = 'ethereum';
       try {
-        const trace = await services.getTransactionTrace(txHash as Hash);
+        const trace = await services.getTransactionTrace(txHash as Hash, network);
         return {
           content: [{
             type: "text",
