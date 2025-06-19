@@ -1385,13 +1385,12 @@ export function registerEVMTools(server: McpServer) {
     "get_function_name_args_from_tx",
     "Get the function name and arguments from the transaction input",
     {
-      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')"),
       txHash: z.string().describe("The transaction hash"),
     },
-    async ({ address, txHash }) => {
+    async ({ txHash }) => {
       const network = 'ethereum';
       try {
-        const result = await services.getFunctionNameAndArgsFromTx(address, txHash as Hash, network);
+        const result = await services.getFunctionNameAndArgsFromTx(txHash as Hash, network);
         if (result) {
           return {
             content: [{
@@ -1441,6 +1440,34 @@ export function registerEVMTools(server: McpServer) {
           content: [{
             type: "text",
             text: `Error fetching transaction trace: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_function_name_from_function_selector",
+    "Get the function name from the function selector",
+    {
+      functionSelector: z.string().describe("The function selector which is the first 4 bytes of the function input signature"),
+    },
+    async ({ functionSelector }) => {
+      const network = 'ethereum';
+      try {
+        const functionName = await services.getFunctionNameFromFunctionSelector(functionSelector as string);
+        return {
+          content: [{
+            type: "text",
+            text: `Function name: ${functionName}`
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching function name: ${error instanceof Error ? error.message : String(error)}`
           }],
           isError: true
         };

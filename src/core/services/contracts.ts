@@ -116,29 +116,64 @@ export async function getContractSourceCode(addressOrEns: string, network = 'eth
   }
 }
 
-export async function getFunctionNameAndArgsFromTx(addressOrEns: string, hash: Hash, network = 'ethereum'): Promise<{ functionName: string; args: readonly unknown[] | undefined } | undefined> {
+export async function getFunctionNameAndArgsFromTx(hash: Hash, network = 'ethereum'): Promise<{ functionName: string; args: readonly unknown[] | undefined } | undefined> {
+  const tx = await getTransaction(hash, network);
+  if (!tx) {
+    throw new Error(`Failed to get transaction input: ${hash}`);
+  }
+  const abi = await getContractAbi(tx.to as string, network);
+  if (!abi) {
+    console.error(`Could not retrieve ABI for contract: ${tx.to}`);
+  }
+
+  let functionName: string | undefined = undefined;
+  let args: readonly unknown[] | undefined = undefined;
+
   try {
-    const abi = await getContractAbi(addressOrEns);
-    if (!abi) {
-      throw new Error(`Could not retrieve ABI for contract: ${addressOrEns}`);
-    }
-
-    const tx = await getTransaction(hash, network);
-    if (!tx) {
-      throw new Error(`Failed to get transaction input: ${hash}`);
-    }
-
-    const { functionName, args } = decodeFunctionData({
-      abi,
-      data: tx.input as Hex,
-    });
-
-    if (!functionName) {
-      throw new Error(`Failed to decode function signature: ${hash}`);
-    }
-    return { functionName, args };
+    if (abi != undefined && tx.input != undefined) {
+      const result = decodeFunctionData({
+        abi: abi as Abi,
+        data: tx.input as Hex,
+      });
+      functionName = result.functionName;
+      args = result.args;
+    } 
   } catch (error) {
     console.error('Failed to decode function signature:', error);
-    return undefined;
+  }
+
+  if (!functionName) {
+    try {
+      const url = `https://mainnet.gateway.tenderly.co/${process.env.TENDERLY_NODE_RPC_KEY}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 0,
+          method: 'tenderly_decodeInput',
+          params: [tx.input as Hex]
+        })
+      });
+    if (!response.ok) {
+      throw new Error(`Tenderly API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(`Tenderly API error: ${data.error.message || 'Unknown error'}`);
+    }
+
+    return { functionName: data.result.name, args: data.result.decodedArguments };
+
+    } catch (error) {
+      console.error('Failed to get transaction trace:', error);
+      return undefined;
+    }
+  } else {
+    return { functionName, args };
   }
 }

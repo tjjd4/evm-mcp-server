@@ -145,3 +145,41 @@ export async function getTransactionTrace(hash: Hash, network = 'ethereum'): Pro
     throw new Error(`Failed to fetch transaction trace: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
+
+export async function getFunctionNameFromFunctionSelector(functionSelector: string, network = 'ethereum'): Promise<string | undefined> {
+  if (!process.env.TENDERLY_NODE_RPC_KEY) {
+    throw new Error('TENDERLY_NODE_RPC_KEY is not set in environment variables');
+  }
+
+  if (!/^0x([A-Fa-f0-9]{8})$/.test(functionSelector)) {
+    throw new Error('Invalid function selector format');
+  }
+
+  try {
+    const url = `https://mainnet.gateway.tenderly.co/${process.env.TENDERLY_NODE_RPC_KEY}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 0,
+        method: 'tenderly_decodeInput',
+        params: [functionSelector]
+      })
+    });
+    if (!response.ok) {
+      throw new Error(`Tenderly API request failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(`Tenderly API error: ${data.error.message || 'Unknown error'}`);
+    }
+    return data.result.name;
+  } catch (error) {
+    console.error('Error fetching function name:', error);
+    return undefined;
+  }
+}
