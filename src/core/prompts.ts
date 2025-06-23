@@ -210,7 +210,7 @@ export function registerEVMPrompts(server: McpServer) {
 
   server.prompt(
     "analyze_user_activity",
-    "Analyze a user's activity by examining the transaction history on a specific EVM network",
+    "Analyze a user's activity by examining the transaction history",
     {
       userAddress: z.string().describe("User address or Ens name to analyze"),
       network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
