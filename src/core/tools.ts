@@ -1199,7 +1199,7 @@ export function registerEVMTools(server: McpServer) {
   // Get contract ABI (Ethereum Mainnet only)
   server.tool(
     "get_contract_abi",
-    "Get the ABI (Application Binary Interface) of a verified smart contract from Ethereum Mainnet using Etherscan",
+    "Get the ABI (Application Binary Interface) of a verified smart contract",
     {
       address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
     },
@@ -1245,7 +1245,7 @@ export function registerEVMTools(server: McpServer) {
 
   server.tool(
     "get_contract_source_code",
-    "Get the source code of a verified smart contract from Ethereum Mainnet using Etherscan",
+    "Get the source code of a verified smart contract for understanding its functionality and logic.",
     {
       address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
     },
@@ -1345,27 +1345,16 @@ export function registerEVMTools(server: McpServer) {
     async ({ address }) => {
       const network = 'ethereum';
       try {
-        const transactions = await services.getTransactionsHistory(address.trim() as Address, network);
-        const flattened = transactions.map(({ rawContract, metadata, ...rest }) => ({
-          ...rest,
-          contractAddress: rawContract?.address || null,
-          blockTimestamp: metadata?.blockTimestamp || null,
-        }));
-
-        const sorted = flattened.sort((a, b) => {
-          const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
-          const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
-          return bTime - aTime;
-        });
+        const transactions = await services.getTransactionHistory(address, network);
 
         return {
           content: [{
             type: "text",
             text: services.helpers.formatJson({
-              amount: sorted.length,
+              amount: transactions.length,
               address,
               network,
-              transactions: sorted,
+              transactions: transactions,
             })
           }]
         };
@@ -1474,4 +1463,79 @@ export function registerEVMTools(server: McpServer) {
       }
     }
   );
+
+
+  // BIGGER TOOLS
+  server.tool(
+    "analyze_user_contract_interactions",
+    "Analyze user interactions with a smart contract, including related transaction history",
+    {
+      userAddress: z.string().describe("The user's wallet address"),
+      contractAddress: z.string().describe("The smart contract address"),
+    },
+    async ({ userAddress, contractAddress }) => {
+      const network = 'ethereum';
+      try {
+        const sourceCode = await services.getContractSourceCode(contractAddress, network);
+        const transactions = await services.getUserAndContractTransactionHistory(userAddress, contractAddress, network);
+        return {
+          content: [{
+            type: "text",
+            text: "Source Code:\n" + services.helpers.formatJson(sourceCode) + "\n\nTransaction History:\n" + services.helpers.formatJson(transactions)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error analyzing user contract interactions: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "analyze_transaction",
+    "Analyze a transaction details including function calls, events, transaction trace, and the source code and abi of the contract involved, should be called at first in any transaction analysis request",
+    {
+      txHash: z.string().describe("The transaction hash to analyze"),
+    },
+    async ({ txHash }) => {
+      const network = 'ethereum';
+      try {
+        const transaction = await services.getTransaction(txHash as Hash, network);
+        const txReciept = await services.getTransactionReceipt(txHash as Hash, network);
+        if ( transaction.to && await services.isContract(transaction.to)) {
+          const functionNameAndArgs = await services.getFunctionNameAndArgsFromTx(txHash as Hash, network);
+          const contractAbi = await services.getContractAbi(transaction.to, network);
+          const contractSourceCode = await services.getContractSourceCode(transaction.to, network);
+          const txTrace = await services.getTransactionTrace(txHash as Hash, network);
+
+          return {
+            content: [{
+              type: "text",
+              text: `Transaction information:\n${services.helpers.formatJson(transaction)}\n\nTransaction Receipt:\n${services.helpers.formatJson(txReciept)}\n\nFunction Name and Arguments:\n${services.helpers.formatJson(functionNameAndArgs)}\n\nContract ABI:\n${services.helpers.formatJson(contractAbi)}\n\nContract Source Code:\n${services.helpers.formatJson(contractSourceCode)}\n\nTransaction Trace:\n${services.helpers.formatJson(txTrace)}`
+            }]
+          }
+        } else {
+          return {
+            content: [{
+              type: "text",
+              text: `Transaction information:\n${services.helpers.formatJson(transaction)}\n\nTransaction Receipt:\n${services.helpers.formatJson(txReciept)}\n\nThis transaction does not involve a contract.`
+            }]
+          };
+        }
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error analyzing transaction: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  )
 }

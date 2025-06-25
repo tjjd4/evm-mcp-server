@@ -76,6 +76,12 @@ export async function getContractAbi(addressOrEns: string, network = 'ethereum')
   }
 }
 
+/**
+ * 
+ * @param addressOrEns Address or ENS name of the contract
+ * @param network Network name or chain ID
+ * @returns The contract source code or undefined if not found
+ */
 export async function getContractSourceCode(addressOrEns: string, network = 'ethereum'): Promise<Record<string, string> | string | undefined> {
   // Resolve ENS name to address if needed
   const address = await resolveAddress(addressOrEns, network);
@@ -116,6 +122,12 @@ export async function getContractSourceCode(addressOrEns: string, network = 'eth
   }
 }
 
+
+/** * Get the function name and arguments from a transaction input data
+ * @param hash Transaction hash
+ * @param network Network name or chain ID (default: 'ethereum')
+ * @returns An object containing the function name and arguments, or undefined if not found
+ */
 export async function getFunctionNameAndArgsFromTx(hash: Hash, network = 'ethereum'): Promise<{ functionName: string; args: readonly unknown[] | undefined } | undefined> {
   const tx = await getTransaction(hash, network);
   if (!tx) {

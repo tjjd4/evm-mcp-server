@@ -60,10 +60,8 @@ export async function getChainId(network = 'ethereum'): Promise<number> {
 /**
  * Get all transactions history for an address for a specific network
  */
-export async function getTransactionsHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
+export async function getTransactionHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
   const address = await resolveAddress(addressOrEns, network);
-  
-  const client = getPublicClient(network);
 
   const config = {
     apiKey: process.env.ALCHEMY_API_KEY,
@@ -101,7 +99,19 @@ export async function getTransactionsHistory(addressOrEns: string, network = 'et
     transfers.push(...to_data.transfers);
   }
 
-  return transfers;
+  const flattened = transfers.map(({ rawContract, metadata, ...rest }) => ({
+    ...rest,
+    contractAddress: rawContract?.address || null,
+    blockTimestamp: metadata?.blockTimestamp || null,
+  }));
+
+  const sorted = flattened.sort((a, b) => {
+    const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
+    const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
+    return bTime - aTime;
+  });
+
+  return sorted;
 }
 
 export async function getTransactionTrace(hash: Hash, network = 'ethereum'): Promise<any> {
@@ -182,4 +192,66 @@ export async function getFunctionNameFromFunctionSelector(functionSelector: stri
     console.error('Error fetching function name:', error);
     return undefined;
   }
+}
+
+export async function getUserAndContractTransactionHistory(
+  addressOrEns: string,
+  contractAddressOrEns: string,
+  network = 'ethereum',
+): Promise<any[]> {
+  // Resolve ENS name to address if needed
+  const userAddress = await resolveAddress(addressOrEns, network);
+  const contractAddress = await resolveAddress(contractAddressOrEns, network);
+
+  const config = {
+    apiKey: process.env.ALCHEMY_API_KEY,
+    network: Network.ETH_MAINNET,
+  };
+  const alchemy = new Alchemy(config);
+
+  const from_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
+    fromBlock: "0x0",
+    fromAddress: userAddress,
+    toAddress: contractAddress,
+    excludeZeroValue: false,
+    category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
+    order: SortingOrder.DESCENDING,
+    withMetadata: true
+  });
+
+  const to_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
+    fromBlock: "0x0",
+    fromAddress: contractAddress,
+    toAddress: userAddress,
+    excludeZeroValue: false,
+    category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
+    order: SortingOrder.DESCENDING,
+    withMetadata: true
+  });
+
+  const from_data = await from_response;
+  const to_data = await to_response;
+  const transfers: AssetTransfersWithMetadataResult[] = [];
+
+  if (from_data.transfers.length > 0) {
+    transfers.push(...from_data.transfers);
+  }
+
+  if (to_data.transfers.length > 0) {
+    transfers.push(...to_data.transfers);
+  }
+
+  const flattened = transfers.map(({ rawContract, metadata, ...rest }) => ({
+    ...rest,
+    contractAddress: rawContract?.address || null,
+    blockTimestamp: metadata?.blockTimestamp || null,
+  }));
+
+  const sorted = flattened.sort((a, b) => {
+    const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
+    const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
+    return bTime - aTime;
+  });
+
+  return sorted;
 }
