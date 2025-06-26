@@ -2,7 +2,10 @@ import {
   type Address, 
   type Hash, 
   type TransactionReceipt,
-  type EstimateGasParameters
+  type EstimateGasParameters,
+  type Log,
+  decodeEventLog,
+  parseEventLogs
 } from 'viem';
 import {
   Network,
@@ -14,6 +17,7 @@ import {
 } from 'alchemy-sdk';
 import { getPublicClient } from './clients.js';
 import { resolveAddress } from './ens.js';
+import { getContractAbi, isContract } from './contracts.js';
 
 /**
  * Get a transaction by hash for a specific network
@@ -25,6 +29,7 @@ export async function getTransaction(hash: Hash, network = 'ethereum') {
 
 /**
  * Get a transaction receipt by hash for a specific network
+ * Automatically tries to decode logs by fetching ABI from each log's contract address
  */
 export async function getTransactionReceipt(hash: Hash, network = 'ethereum'): Promise<TransactionReceipt> {
   const client = getPublicClient(network);
