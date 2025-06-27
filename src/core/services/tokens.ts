@@ -162,4 +162,51 @@ export async function getERC1155TokenURI(
   });
 
   return contract.read.uri([tokenId]);
-} 
+}
+
+export async function getERC20TokenPrice(
+  tokenAddress?: Address,
+  tokenSymbol?: string,
+  network: string = 'ethereum'
+): Promise<number | undefined> {
+  if (!process.env.COINGECKO_API_KEY) {
+    throw new Error('COINGECKO_API_KEY is not set in environment variables');
+  }
+
+  if (!tokenAddress && !tokenSymbol) {
+    throw new Error('Either tokenAddress or tokenSymbol must be provided');
+  }
+  let url = "";
+  if (tokenSymbol) {
+    url = `https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&symbols=${tokenSymbol.toLowerCase()}`;
+  } else if (tokenAddress) {
+    url = `https://api.coingecko.com/api/v3/simple/token_price/ethereum?vs_currencies=usd&contract_addresses=${tokenAddress}`;
+  }
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Coingecko API request failed with status ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching token price:', error);
+    return undefined;
+  }
+}
+
+export async function getERC20TokenSymbolFromAddress(
+  tokenAddress: Address,
+  network: string = 'ethereum'
+): Promise<string | undefined> {
+  const publicClient = getPublicClient(network);
+
+  const contract = getContract({
+    address: tokenAddress,
+    abi: erc20Abi,
+    client: publicClient,
+  });
+
+  return contract.read.symbol();
+}

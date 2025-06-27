@@ -1370,6 +1370,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+  // Get function name and arguments from transaction input
   server.tool(
     "get_function_name_args_from_tx",
     "Get the function name and arguments from the transaction input",
@@ -1408,6 +1409,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+  // Get transaction trace using tenderly
   server.tool(
     "get_transaction_trace",
     "Get the detail transaction trace for a specific transaction",
@@ -1436,6 +1438,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+  // Get function name from function selector (abi not needed, heuristic)
   server.tool(
     "get_function_name_from_function_selector",
     "Get the function name from the function selector",
@@ -1464,8 +1467,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
-
-  // BIGGER TOOLS
+  // Analyze user interactions with a smart contract
   server.tool(
     "analyze_user_contract_interactions",
     "Analyze user interactions with a smart contract, including related transaction history",
@@ -1496,6 +1498,8 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+
+  // base on the analysis level, provide a recommended tool chain for transaction analysis
   server.tool(
     "analyze_transaction",
     "Smart transaction analysis router that provides tool recommendations based on analysis level. Always call this first for transaction analysis to get guidance on which tools to use.",
@@ -1573,5 +1577,55 @@ export function registerEVMTools(server: McpServer) {
         };
       }
     }
-  )
+  );
+
+  // get token price
+  server.tool(
+    "get_token_price",
+    "Get the current price of an ERC20 token in USD",
+    {
+      tokenAddress: z.string().optional().describe("The contract address of the ERC20 token (e.g., '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' for USDC on Ethereum)"),
+      tokenSymbol: z.string().optional().describe("The symbol of the ERC20 token (e.g., 'USDC'). If provided, it will be used to fetch the price. If not provided, tokenAddress is required.")
+    },
+    async ({ tokenAddress, tokenSymbol }) => {
+      const network = 'ethereum'; // Default to Ethereum mainnet
+
+      if (!tokenAddress && !tokenSymbol) {
+        return {
+          content: [{
+            type: "text",
+            text: "Please provide either tokenAddress or tokenSymbol to get the price."
+          }],
+          isError: true
+        };
+      }
+
+      const price = await services.getERC20TokenPrice(tokenAddress as Address, tokenSymbol, network);
+      return {
+        content: [{
+          type: "text",
+          text: `Current price: ${services.helpers.formatJson(price)}`
+        }]
+      };
+    }
+  );
+
+  server.tool(
+    "get_token_symbol_from_address",
+    "Get the symbol of an ERC20 token from its contract address",
+    {
+      tokenAddress: z.string().describe("The contract address of the ERC20 token (e.g., '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' for USDC on Ethereum)")
+    },
+    async ({ tokenAddress }) => {
+      const network = 'ethereum'; // Default to Ethereum mainnet
+
+      const symbol = await services.getERC20TokenSymbolFromAddress(tokenAddress as Address, network);
+      return {
+        content: [{
+          type: "text",
+          text: `Token symbol: ${symbol}`
+        }]
+      };
+    }
+  );
 }
