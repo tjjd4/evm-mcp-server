@@ -164,7 +164,7 @@ export async function getERC1155TokenURI(
   return contract.read.uri([tokenId]);
 }
 
-export async function getERC20TokenPrice(
+export async function getERC20TokenCurrentPrice(
   tokenSymbol: string,
   network: string = 'ethereum'
 ): Promise<number | undefined> {

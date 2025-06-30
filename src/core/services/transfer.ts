@@ -439,7 +439,7 @@ export async function transferERC1155(
   };
 }
 
-export async function getTransfersHistory(addressOrEns: string, network = 'ethereum'): Promise<AssetTransfersWithMetadataResult[]> {
+export async function getTransfersHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
   const address = await resolveAddress(addressOrEns, network);
 
   const client = getPublicClient(network);
@@ -480,5 +480,17 @@ export async function getTransfersHistory(addressOrEns: string, network = 'ether
     transfers.push(...to_data.transfers);
   }
 
-  return transfers;
+  const flattened = transfers.map(({ rawContract, metadata, ...rest }) => ({
+    ...rest,
+    contractAddress: rawContract?.address || null,
+    blockTimestamp: metadata?.blockTimestamp || null,
+  }));
+
+  const sorted = flattened.sort((a, b) => {
+    const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
+    const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
+    return bTime - aTime;
+  });
+
+  return sorted;
 }
