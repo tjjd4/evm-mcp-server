@@ -21,16 +21,19 @@ bun install   # or: npm install
 
 ### 2. API Key Setup (Required for Full Functionality)
 
-Create a `.env` file in the project root:
+Copy the .env.sample or create a `.env` file in the project root.
 
+Bash command:
+```bash
+cp .env.sample .env  # copy the .env.sample and name it .env (suggested)
+touch .env           # create a empty .env file
+```
+.env file:
 ```env
-# Required for transaction history and transfers
 ALCHEMY_API_KEY=your-alchemy-api-key-here
 
-# Required for contract ABI and source code lookups  
 ETHERSCAN_API_KEY=your-etherscan-api-key-here
 
-# Optional: For enhanced RPC features
 TENDERLY_NODE_RPC_KEY=your-tenderly-rpc-key-here
 ```
 
@@ -219,7 +222,7 @@ The MCP EVM Server requires API keys from external services to provide full func
 
 ### Required API Keys
 
-Create a `.env` file in your project root and add the following keys:
+Copy the .env.sample or create a `.env` file in your project root and add the following keys:
 
 ```env
 # REQUIRED: For transaction history, transfers, and enhanced blockchain data
@@ -228,7 +231,7 @@ ALCHEMY_API_KEY=your_alchemy_api_key_here
 # REQUIRED: For smart contract ABI and source code lookups (Ethereum mainnet only)
 ETHERSCAN_API_KEY=your_etherscan_api_key_here
 
-# OPTIONAL: For enhanced RPC features and transaction tracing
+# REQUIRED: For enhanced RPC features and transaction tracing
 TENDERLY_NODE_RPC_KEY=your_tenderly_rpc_key_here
 ```
 
@@ -247,7 +250,7 @@ TENDERLY_NODE_RPC_KEY=your_tenderly_rpc_key_here
 - Generate a new API key
 - **Used for**: Smart contract ABI lookups, source code verification (Ethereum mainnet only)
 
-#### 3. Tenderly RPC Key (Optional)
+#### 3. Tenderly RPC Key (Required)
 - Visit [dashboard.tenderly.co](https://dashboard.tenderly.co/)
 - Sign up for an account
 - Navigate to Node RPC settings
@@ -346,23 +349,6 @@ bun run dev:http      # Development mode with auto-reload
 
 Connect to this MCP server using any MCP-compatible client. For testing and debugging, you can use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector).
 
-### Connecting from Cursor
-
-To connect to the MCP server from Cursor:
-
-1. **Make sure you have API keys set up** - Create a `.env` file in your project root with your API keys
-2. Open Cursor and go to Settings (gear icon in the bottom left)
-3. Click on "Features" in the left sidebar
-4. Scroll down to "MCP Servers" section
-5. Click "Add new MCP server"
-6. Enter the following details:
-   - Server name: `evm-mcp-server`
-   - Type: `command`
-   - Command: `npx @mcpdotdirect/evm-mcp-server`
-
-7. Click "Save"
-
-Once connected, you can use the MCP server's capabilities directly within Cursor. The server will appear in the MCP Servers list and can be enabled/disabled as needed.
 
 ### Using mcp with models
 In mcp setup `.json` file, add the mcp server bellow:
