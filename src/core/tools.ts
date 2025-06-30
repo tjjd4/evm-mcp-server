@@ -1351,6 +1351,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+  // Get contract source code (Ethereum Mainnet only)
   server.tool(
     "get_contract_source_code",
     "Get the source code of a verified smart contract from Ethereum Mainnet using Etherscan",
@@ -1397,6 +1398,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+  // Get function name and arguments from transaction input
   server.tool(
     "get_function_name_args_from_tx",
     "Get the function name and arguments from the transaction input",
@@ -1435,6 +1437,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+  // Get transaction trace
   server.tool(
     "get_transaction_trace",
     "Get the detail transaction trace for a specific transaction",
@@ -1463,6 +1466,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+  // Get function name from function selector
   server.tool(
     "get_function_name_from_function_selector",
     "Get the function name from the function selector",
