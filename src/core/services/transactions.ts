@@ -65,7 +65,7 @@ export async function getChainId(network = 'ethereum'): Promise<number> {
 /**
  * Get all transactions history for an address for a specific network
  */
-export async function getTransactionHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
+export async function getTransactionsHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
   const address = await resolveAddress(addressOrEns, network);
 
   const config = {
@@ -94,17 +94,17 @@ export async function getTransactionHistory(addressOrEns: string, network = 'eth
 
   const from_data = await from_response;
   const to_data = await to_response;
-  const transfers: AssetTransfersWithMetadataResult[] = [];
+  const transactions: AssetTransfersWithMetadataResult[] = [];
 
   if (from_data.transfers.length > 0) {
-    transfers.push(...from_data.transfers);
+    transactions.push(...from_data.transfers);
   }
 
   if (to_data.transfers.length > 0) {
-    transfers.push(...to_data.transfers);
+    transactions.push(...to_data.transfers);
   }
 
-  const flattened = transfers.map(({ rawContract, metadata, ...rest }) => ({
+  const flattened = transactions.map(({ rawContract, metadata, ...rest }) => ({
     ...rest,
     contractAddress: rawContract?.address || null,
     blockTimestamp: metadata?.blockTimestamp || null,
