@@ -1201,8 +1201,8 @@ export function registerEVMTools(server: McpServer) {
 
   // Get transfers history
   server.tool(
-    "get_transfers_history",
-    "Get transfers history for an address including ERC20, ERC721 and ERC1155 tokens",
+    "get_transfer_history",
+    "Get transfer history for an address including ERC20, ERC721 and ERC1155 tokens",
     {
       address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'uniswap.eth')"),
     },
@@ -1390,6 +1390,100 @@ export function registerEVMTools(server: McpServer) {
           content: [{
             type: 'text',
             text: `Failed to get contract code: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_function_name_args_from_tx",
+    "Get the function name and arguments from the transaction input",
+    {
+      txHash: z.string().describe("The transaction hash"),
+    },
+    async ({ txHash }) => {
+      const network = 'ethereum';
+      try {
+        const result = await services.getFunctionNameAndArgsFromTx(txHash as Hash, network);
+        if (result) {
+          return {
+            content: [{
+              type: "text",
+              text: `Function name: ${result.functionName}\nArguments: ${services.helpers.formatJson(result.args)}`
+            }]
+          };
+        } else {
+          return {
+            content: [{
+              type: "text",
+              text: `No matching function found for transaction: ${txHash}`
+            }],
+            isError: true
+          };
+        }
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching function name and args: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_transaction_trace",
+    "Get the detail transaction trace for a specific transaction",
+    {
+      txHash: z.string().describe("The transaction hash"),
+    },
+    async ({ txHash }) => {
+      const network = 'ethereum';
+      try {
+        const trace = await services.getTransactionTrace(txHash as Hash, network);
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson(trace)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching transaction trace: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_function_name_from_function_selector",
+    "Get the function name from the function selector",
+    {
+      functionSelector: z.string().describe("The function selector which is the first 4 bytes of the function input signature"),
+    },
+    async ({ functionSelector }) => {
+      const network = 'ethereum';
+      try {
+        const functionName = await services.getFunctionNameFromFunctionSelector(functionSelector as string);
+        return {
+          content: [{
+            type: "text",
+            text: `Function name: ${functionName}`
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching function name: ${error instanceof Error ? error.message : String(error)}`
           }],
           isError: true
         };
