@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
+import { symbol, z } from "zod";
 import { getSupportedNetworks, getRpcUrl } from "./chains.js";
 import * as services from "./services/index.js";
 import { type Address, type Hex, type Hash } from 'viem';
@@ -1599,8 +1599,14 @@ export function registerEVMTools(server: McpServer) {
           isError: true
         };
       }
+      let coingeckoSymbol = undefined;
+      if (tokenAddress) {
+        coingeckoSymbol = await services.getERC20TokenSymbolFromAddress(tokenAddress as Address, network);
+      }
+      // Use tokenSymbol if provided, otherwise use coingeckoSymbol
+      const finalSymbol = tokenSymbol || coingeckoSymbol || '';
 
-      const price = await services.getERC20TokenPrice(tokenAddress as Address, tokenSymbol, network);
+      const price = await services.getERC20TokenPrice(finalSymbol, network);
       return {
         content: [{
           type: "text",

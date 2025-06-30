@@ -165,23 +165,18 @@ export async function getERC1155TokenURI(
 }
 
 export async function getERC20TokenPrice(
-  tokenAddress?: Address,
-  tokenSymbol?: string,
+  tokenSymbol: string,
   network: string = 'ethereum'
 ): Promise<number | undefined> {
   if (!process.env.COINGECKO_API_KEY) {
     throw new Error('COINGECKO_API_KEY is not set in environment variables');
   }
 
-  if (!tokenAddress && !tokenSymbol) {
-    throw new Error('Either tokenAddress or tokenSymbol must be provided');
+  if (tokenSymbol == '') {
+    throw new Error('Token symbol is required to fetch price');
   }
-  let url = "";
-  if (tokenSymbol) {
-    url = `https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&symbols=${tokenSymbol.toLowerCase()}`;
-  } else if (tokenAddress) {
-    url = `https://api.coingecko.com/api/v3/simple/token_price/ethereum?vs_currencies=usd&contract_addresses=${tokenAddress}`;
-  }
+
+  const url = `https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&symbols=${tokenSymbol.toLowerCase()}`;
 
   try {
     const response = await fetch(url);
