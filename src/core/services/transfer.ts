@@ -439,7 +439,13 @@ export async function transferERC1155(
   };
 }
 
-export async function getTransfersHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
+/**
+ * Get the transfer history for a specific address or ENS name
+ * @param addressOrEns Address or ENS name to resolve
+ * @param network Network name or chain ID
+ * @returns Array of transfer events
+ */
+export async function getTransferHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
   const address = await resolveAddress(addressOrEns, network);
 
   const client = getPublicClient(network);

@@ -21,6 +21,9 @@ import { getContractAbi, isContract } from './contracts.js';
 
 /**
  * Get a transaction by hash for a specific network
+ * @param hash - The transaction hash to look up
+ * @param network - The network to use (default is 'ethereum')
+ * @returns The transaction details
  */
 export async function getTransaction(hash: Hash, network = 'ethereum') {
   const client = getPublicClient(network);
@@ -30,6 +33,9 @@ export async function getTransaction(hash: Hash, network = 'ethereum') {
 /**
  * Get a transaction receipt by hash for a specific network
  * Automatically tries to decode logs by fetching ABI from each log's contract address
+ * @param hash - The transaction hash to look up
+ * @param network - The network to use (default is 'ethereum')
+ * @returns The transaction receipt with decoded logs
  */
 export async function getTransactionReceipt(hash: Hash, network = 'ethereum'): Promise<TransactionReceipt> {
   const client = getPublicClient(network);
@@ -38,6 +44,9 @@ export async function getTransactionReceipt(hash: Hash, network = 'ethereum'): P
 
 /**
  * Get the transaction count for an address for a specific network
+ * @param address - The address to get the transaction count for
+ * @param network - The network to use (default is 'ethereum')
+ * @returns The number of transactions sent from the address
  */
 export async function getTransactionCount(address: Address, network = 'ethereum'): Promise<number> {
   const client = getPublicClient(network);
@@ -47,6 +56,9 @@ export async function getTransactionCount(address: Address, network = 'ethereum'
 
 /**
  * Estimate gas for a transaction for a specific network
+ * @param params - The parameters for the transaction to estimate gas for (EstimateGasParameters from viem)
+ * @param network - The network to use (default is 'ethereum')
+ * @returns The estimated gas required for the transaction
  */
 export async function estimateGas(params: EstimateGasParameters, network = 'ethereum'): Promise<bigint> {
   const client = getPublicClient(network);
@@ -55,6 +67,8 @@ export async function estimateGas(params: EstimateGasParameters, network = 'ethe
 
 /**
  * Get the chain ID for a specific network
+ * @param network - The network to get the chain ID for (default is 'ethereum')
+ * @returns The chain ID as a number
  */
 export async function getChainId(network = 'ethereum'): Promise<number> {
   const client = getPublicClient(network);
@@ -64,8 +78,11 @@ export async function getChainId(network = 'ethereum'): Promise<number> {
 
 /**
  * Get all transactions history for an address for a specific network
+ * @param addressOrEns - The address or ENS name to get transactions for
+ * @param network - The network to use (default is 'ethereum')
+ * @returns An array of transaction objects with metadata
  */
-export async function getTransactionsHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
+export async function getTransactionHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
   const address = await resolveAddress(addressOrEns, network);
 
   const config = {
@@ -119,6 +136,13 @@ export async function getTransactionsHistory(addressOrEns: string, network = 'et
   return sorted;
 }
 
+/**
+ * Get the transaction trace for a specific transaction hash using Tenderly
+ * Requires TENDERLY_NODE_RPC_KEY environment variable to be set
+ * @param hash - The transaction hash to trace
+ * @param network - The network to use (default is 'ethereum')
+ * @returns The transaction trace object
+ */
 export async function getTransactionTrace(hash: Hash, network = 'ethereum'): Promise<any> {
   if (!process.env.TENDERLY_NODE_RPC_KEY) {
       throw new Error('TENDERLY_NODE_RPC_KEY is not set in environment variables');
@@ -161,6 +185,13 @@ export async function getTransactionTrace(hash: Hash, network = 'ethereum'): Pro
   }
 }
 
+/**
+ * Get the function name from a function selector using Tenderly
+ * Requires TENDERLY_NODE_RPC_KEY environment variable to be set
+ * @param functionSelector - The function selector to decode (e.g., '0xa9059cbb' for ERC20 transfer)
+ * @param network - The network to use (default is 'ethereum')
+ * @returns The decoded function name or undefined if not found
+ */
 export async function getFunctionNameFromFunctionSelector(functionSelector: string, network = 'ethereum'): Promise<string | undefined> {
   if (!process.env.TENDERLY_NODE_RPC_KEY) {
     throw new Error('TENDERLY_NODE_RPC_KEY is not set in environment variables');
@@ -199,14 +230,21 @@ export async function getFunctionNameFromFunctionSelector(functionSelector: stri
   }
 }
 
-export async function getUserAndContractTransactionHistory(
-  addressOrEns: string,
-  contractAddressOrEns: string,
+/**
+ * Get the transaction history between a user and a contract
+ * @param addressOrEns - The user's address or ENS name
+ * @param contractAddressOrEns - The contract's address or ENS name
+ * @param network - The network to use (default is 'ethereum')
+ * @returns An array of transaction objects with metadata
+ */
+export async function getTwoAddressTransactionHistory(
+  addressOrEns1: string,
+  addressOrEns2: string,
   network = 'ethereum',
 ): Promise<any[]> {
   // Resolve ENS name to address if needed
-  const userAddress = await resolveAddress(addressOrEns, network);
-  const contractAddress = await resolveAddress(contractAddressOrEns, network);
+  const address1 = await resolveAddress(addressOrEns1, network);
+  const address2 = await resolveAddress(addressOrEns2, network);
 
   const config = {
     apiKey: process.env.ALCHEMY_API_KEY,
@@ -216,8 +254,8 @@ export async function getUserAndContractTransactionHistory(
 
   const from_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
     fromBlock: "0x0",
-    fromAddress: userAddress,
-    toAddress: contractAddress,
+    fromAddress: address1,
+    toAddress: address2,
     excludeZeroValue: false,
     category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
     order: SortingOrder.DESCENDING,
@@ -226,8 +264,8 @@ export async function getUserAndContractTransactionHistory(
 
   const to_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
     fromBlock: "0x0",
-    fromAddress: contractAddress,
-    toAddress: userAddress,
+    fromAddress: address2,
+    toAddress: address1,
     excludeZeroValue: false,
     category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
     order: SortingOrder.DESCENDING,

@@ -1194,7 +1194,10 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+  // =============================================
   // NEW TOOLS
+  // =============================================
+  
 
   // Get transfers history
   server.tool(
@@ -1206,7 +1209,7 @@ export function registerEVMTools(server: McpServer) {
     async ({ address }) => {
       const network = 'ethereum';
       try {
-        const transfers = await services.getTransfersHistory(address.trim(), network);
+        const transfers = await services.getTransferHistory(address.trim(), network);
 
         return {
           content: [{
@@ -1233,15 +1236,15 @@ export function registerEVMTools(server: McpServer) {
 
   // Get transactions history
   server.tool(
-    "get_transactions_history",
-    "Get transactions history for an address including internal transactions",
+    "get_transaction_history",
+    "Get transaction history for an address including internal transactions",
     {
       address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'vitalik.eth')"),
       network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Defaults to Ethereum mainnet.")
     },
     async ({ address, network = "ethereum" }) => {
       try {
-        const transactions = await services.getTransactionsHistory(address.trim(), network);
+        const transactions = await services.getTransactionHistory(address.trim(), network);
         return {
           content: [{
             type: "text",
@@ -1258,6 +1261,42 @@ export function registerEVMTools(server: McpServer) {
           content: [{
             type: "text",
             text: `Error fetching transactions history for ${address}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // get transaction history between two addresses
+  server.tool(
+    "get_two_address_transaction_history",
+    "Get transaction history between two addresses including internal transactions, could be contracts or EOAs",
+    {
+      addressOrEns1: z.string().describe("The first wallet or contract address or ENS name to check (e.g., '0x1234...' or 'vitalik.eth')"),
+      addressOrEns2: z.string().describe("The second wallet or contract address or ENS name to check (e.g., '0x1234...' or 'vitalik.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Defaults to Ethereum mainnet.")
+    },
+    async ({ addressOrEns1, addressOrEns2, network = "ethereum" }) => {
+      try {
+        const transactions = await services.getTwoAddressTransactionHistory(addressOrEns1.trim(), addressOrEns2.trim(), network);
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson({
+              address1: addressOrEns1,
+              address2: addressOrEns2,
+              network,
+              amount: transactions.length,
+              transactions: transactions,
+            }),
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching transactions history for ${addressOrEns1} and ${addressOrEns2}: ${error instanceof Error ? error.message : String(error)}`
           }],
           isError: true
         };
@@ -1426,9 +1465,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
-  // =============================================
   // UTILITY TOOLS
-  // =============================================
   
   // Format wei to ether
   server.tool(
