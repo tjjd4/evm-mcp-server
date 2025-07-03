@@ -3,9 +3,7 @@ import {
   type Hash, 
   type TransactionReceipt,
   type EstimateGasParameters,
-  type Log,
-  decodeEventLog,
-  parseEventLogs
+  Hex
 } from 'viem';
 import {
   Network,
@@ -17,7 +15,6 @@ import {
 } from 'alchemy-sdk';
 import { getPublicClient } from './clients.js';
 import { resolveAddress } from './ens.js';
-import { getContractAbi, isContract } from './contracts.js';
 
 /**
  * Get a transaction by hash for a specific network
@@ -39,7 +36,12 @@ export async function getTransaction(hash: Hash, network = 'ethereum') {
  */
 export async function getTransactionReceipt(hash: Hash, network = 'ethereum'): Promise<TransactionReceipt> {
   const client = getPublicClient(network);
-  return await client.getTransactionReceipt({ hash });
+  const receipt = await client.getTransactionReceipt({ hash });
+  if (!receipt) {
+    throw new Error(`Transaction receipt not found for hash: ${hash}`);
+  }
+  const trace = await getTransactionTrace(hash, network);
+  return { ...receipt, logs: trace.logs || receipt.logs };
 }
 
 /**
