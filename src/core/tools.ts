@@ -1563,6 +1563,86 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
+  // base on the analysis level, provide a recommended tool chain for transaction analysis
+  server.tool(
+    "analyze_transaction",
+    "Smart transaction analysis router that provides tool recommendations based on analysis level. Always call this first for transaction analysis to get guidance on which tools to use.",
+    {
+      level: z.enum(["basic", "detailed", "deep"]).describe("Analysis level: 'basic' (simple overview), 'detailed' (with trace and function), 'deep' (with source code and ABI)"),
+      txHash: z.string().describe("The transaction hash to analyze"),
+    },
+    async ({ level, txHash }) => {
+      const network = 'ethereum';
+      try {
+        // First, get basic transaction info to determine the analysis path
+        const transaction = await services.getTransaction(txHash as Hash, network);
+        const isContractTransaction = transaction.to && await services.isContract(transaction.to);
+        
+        let recommendations = `Transaction Analysis Plan (Level: ${level})\n\n`;
+        recommendations += `Transaction Hash: ${txHash}\n`;
+        recommendations += `Transaction Type: ${isContractTransaction ? 'Contract Interaction' : 'Simple Transfer'}\n`;
+        
+        if (transaction.to) {
+          recommendations += `Target Address: ${transaction.to}\n`;
+        }
+        
+        recommendations += `\nRecommended Tool Chain:\n`;
+        
+        // Always start with basic transaction info
+        recommendations += `1. get_transaction - Get basic transaction details\n`;
+        recommendations += `2. get_transaction_receipt - Get transaction receipt and events\n`;
+        
+        if (!isContractTransaction) {
+          recommendations += `\nThis is a simple ETH transfer. Basic tools above are sufficient.\n`;
+        } else {
+          // Contract transaction - provide level-specific recommendations
+          switch (level) {
+            case "basic":
+              recommendations += `3. is_contract - Confirm contract interaction\n`;
+              recommendations += `\nBasic analysis complete. For more details, use 'detailed' or 'deep' levels.\n`;
+              break;
+              
+            case "detailed":
+              recommendations += `3. get_function_name_args_from_tx - Extract function call details\n`;
+              recommendations += `4. get_transaction_trace - Get detailed execution trace\n`;
+              recommendations += `\nDetailed analysis with function calls and execution trace. This will help understand what function was called and how it executed.\n`;
+              break;
+              
+            case "deep":
+              recommendations += `3. get_function_name_args_from_tx - Extract function call details\n`;
+              recommendations += `4. get_transaction_trace - Get detailed execution trace\n`;
+              recommendations += `5. get_contract_abi - Get contract ABI\n`;
+              recommendations += `6. get_contract_source_code - Get contract source code\n`;
+              recommendations += `\nDeep analysis with complete contract understanding. Use all tools above for comprehensive transaction analysis including source code review.\n`;
+              break;
+          }
+          
+          recommendations += `\nOptional additional tools based on findings:\n`;
+          recommendations += `- get_function_name_from_function_selector - If you need to decode function selectors\n`;
+          recommendations += `- get_token_info - If ERC20 token transfers are involved\n`;
+          recommendations += `- get_nft_info - If NFT transfers are involved\n`;
+          recommendations += `- analyze_user_contract_interactions - For user behavior analysis\n`;
+        }
+        
+        return {
+          content: [{
+            type: "text",
+            text: recommendations
+          }]
+        };
+        
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error in transaction analysis planning: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
   // UTILITY TOOLS
   
   // Format wei to ether
