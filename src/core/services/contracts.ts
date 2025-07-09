@@ -1,5 +1,4 @@
 import { 
-  decodeFunctionData,
   type Address,
   type Hash, 
   type Hex,
@@ -10,7 +9,6 @@ import {
 } from 'viem';
 import { getPublicClient, getWalletClient } from './clients.js';
 import { resolveAddress } from './ens.js';
-import { getTransaction } from './transactions.js';
 
 /**
  * Read from a contract for a specific network
@@ -23,11 +21,7 @@ export async function readContract(params: ReadContractParameters, network = 'et
 /**
  * Write to a contract for a specific network
  */
-export async function writeContract(
-  privateKey: Hex, 
-  params: Record<string, any>, 
-  network = 'ethereum'
-): Promise<Hash> {
+export async function writeContract(privateKey: Hex, params: Record<string, any>, network = 'ethereum'): Promise<Hash> {
   const client = getWalletClient(privateKey, network);
   return await client.writeContract(params as any);
 }
@@ -119,73 +113,5 @@ export async function getContractSourceCode(addressOrEns: string, network = 'eth
     }
   } else {
     return undefined;
-  }
-}
-
-
-/** * Get the function name and arguments from a transaction input data
- * @param hash Transaction hash
- * @param network Network name or chain ID (default: 'ethereum')
- * @returns An object containing the function name and arguments, or undefined if not found
- */
-export async function getFunctionNameAndArgsFromTx(hash: Hash, network = 'ethereum'): Promise<{ functionName: string; args: readonly unknown[] | undefined } | undefined> {
-  const tx = await getTransaction(hash, network);
-  if (!tx) {
-    throw new Error(`Failed to get transaction input: ${hash}`);
-  }
-  const abi = await getContractAbi(tx.to as string, network);
-  if (!abi) {
-    console.error(`Could not retrieve ABI for contract: ${tx.to}`);
-  }
-
-  let functionName: string | undefined = undefined;
-  let args: readonly unknown[] | undefined = undefined;
-
-  try {
-    if (abi != undefined && tx.input != undefined) {
-      const result = decodeFunctionData({
-        abi: abi as Abi,
-        data: tx.input as Hex,
-      });
-      functionName = result.functionName;
-      args = result.args;
-    } 
-  } catch (error) {
-    console.error('Failed to decode function signature:', error);
-  }
-
-  if (!functionName) {
-    try {
-      const url = `https://mainnet.gateway.tenderly.co/${process.env.TENDERLY_NODE_RPC_KEY}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 0,
-          method: 'tenderly_decodeInput',
-          params: [tx.input as Hex]
-        })
-      });
-    if (!response.ok) {
-      throw new Error(`Tenderly API request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.error) {
-      throw new Error(`Tenderly API error: ${data.error.message || 'Unknown error'}`);
-    }
-
-    return { functionName: data.result.name, args: data.result.decodedArguments };
-
-    } catch (error) {
-      console.error('Failed to get transaction trace:', error);
-      return undefined;
-    }
-  } else {
-    return { functionName, args };
   }
 }

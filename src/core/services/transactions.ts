@@ -1,9 +1,11 @@
 import { 
   type Address, 
-  type Hash, 
+  type Hash,
+  type Abi,
   type TransactionReceipt,
   type EstimateGasParameters,
-  Hex
+  Hex,
+  decodeFunctionData,
 } from 'viem';
 import {
   Network,
@@ -13,8 +15,9 @@ import {
   type AssetTransfersWithMetadataResponse,
   type AssetTransfersWithMetadataResult
 } from 'alchemy-sdk';
-import { getPublicClient } from './clients.js';
+import { getPublicClient, getTenderlyClient } from './clients.js';
 import { resolveAddress } from './ens.js';
+import { getContractAbi } from './contracts.js';
 
 /**
  * Get a transaction by hash for a specific network
@@ -146,41 +149,27 @@ export async function getTransactionHistory(addressOrEns: string, network = 'eth
  * @returns The transaction trace object
  */
 export async function getTransactionTrace(hash: Hash, network = 'ethereum'): Promise<any> {
-  if (!process.env.TENDERLY_NODE_RPC_KEY) {
-      throw new Error('TENDERLY_NODE_RPC_KEY is not set in environment variables');
-  }
+  const client = getTenderlyClient(network);
 
   if (!/^0x([A-Fa-f0-9]{64})$/.test(hash)) {
       throw new Error('Invalid transaction hash format');
   }
-
-  const url = `https://mainnet.gateway.tenderly.co/${process.env.TENDERLY_NODE_RPC_KEY}`;
   
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 0,
-        method: 'tenderly_traceTransaction',
-        params: [hash]
-      })
+    const response = await client.request<{
+      method: 'tenderly_traceTransaction',
+      Parameters: [Hash],
+      ReturnType: any
+    }>({
+      method: "tenderly_traceTransaction",
+      params: [
+        // transaction hash
+        hash,
+      ],
     });
 
-    if (!response.ok) {
-      throw new Error(`Tenderly API request failed with status ${response.status}`);
-    }
+    return response;
 
-    const data = await response.json();
-    
-    if (data.error) {
-      throw new Error(`Tenderly API error: ${data.error.message || 'Unknown error'}`);
-    }
-
-    return data.result;
   } catch (error) {
     console.error('Error fetching transaction trace:', error);
     throw new Error(`Failed to fetch transaction trace: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -193,44 +182,79 @@ export async function getTransactionTrace(hash: Hash, network = 'ethereum'): Pro
  * @param functionSelector - The function selector to decode (e.g., '0xa9059cbb' for ERC20 transfer)
  * @param network - The network to use (default is 'ethereum')
  * @returns The decoded function name or undefined if not found
+ * @throws Error if the function selector is invalid or if the Tenderly API request fails
  */
-export async function getFunctionNameFromFunctionSelector(functionSelector: string, network = 'ethereum'): Promise<string | undefined> {
-  if (!process.env.TENDERLY_NODE_RPC_KEY) {
-    throw new Error('TENDERLY_NODE_RPC_KEY is not set in environment variables');
+export async function decodeInput(callData: string, network = 'ethereum'): Promise<{ functionName: string; args: readonly unknown[] | undefined}> {
+
+  if (!/^0x([A-Fa-f0-9]{8,})$/.test(callData)) {
+    throw new Error('Invalid call data format');
   }
 
-  if (!/^0x([A-Fa-f0-9]{8})$/.test(functionSelector)) {
-    throw new Error('Invalid function selector format');
+  type TDecodeInputParams = [callData: string];
+  type TDecodeInputReturnType = {
+    name: string;
+    decodedArguments: readonly unknown[] | undefined;
+  };
+  const client = getTenderlyClient(network);
+
+  try {
+    const response = await client.request<{
+      method: 'tenderly_decodeInput',
+      Parameters: TDecodeInputParams,
+      ReturnType: TDecodeInputReturnType
+    }>({
+      method: "tenderly_decodeInput",
+      params: [
+        // transaction hash
+        callData,
+      ],
+    });
+
+    return {
+      functionName: response.name,
+      args: response.decodedArguments
+    };
+
+  } catch (error) {
+    console.error('Error fetching decode input:', error);
+    throw new Error(`Failed to decode input: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+ /**
+ * Get the function name and arguments from a transaction input data
+ * @param hash Transaction hash
+ * @param network Network name or chain ID (default: 'ethereum')
+ * @returns An object containing the function name and arguments, or undefined if not found
+ */
+export async function getFunctionNameAndArgsFromTx(hash: Hash, network = 'ethereum'): Promise<{ functionName: string; args: readonly unknown[] | undefined }> {
+  const tx = await getTransaction(hash, network);
+  if (!tx) {
+    throw new Error(`Failed to get transaction input: ${hash}`);
+  }
+  const abi = await getContractAbi(tx.to as string, network);
+  if (!abi) {
+    console.error(`Could not retrieve ABI for contract: ${tx.to}`);
   }
 
   try {
-    const url = `https://mainnet.gateway.tenderly.co/${process.env.TENDERLY_NODE_RPC_KEY}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 0,
-        method: 'tenderly_decodeInput',
-        params: [functionSelector]
-      })
-    });
-    if (!response.ok) {
-      throw new Error(`Tenderly API request failed with status ${response.status}`);
+    if (abi != undefined && tx.input != undefined) {
+      const result = decodeFunctionData({
+        abi: abi as Abi,
+        data: tx.input as Hex,
+      });
+      if (result.functionName !== undefined) {
+        return { functionName: result.functionName, args: result.args };
+      }
     }
-    const data = await response.json();
-    
-    if (data.error) {
-      throw new Error(`Tenderly API error: ${data.error.message || 'Unknown error'}`);
-    }
-    return data.result.name;
+    const decoded = await decodeInput(tx.input as Hex, network);
+    return decoded;
   } catch (error) {
-    console.error('Error fetching function name:', error);
-    return undefined;
+    console.error('Failed to decode function signature:', error);
+    throw new Error(`Failed to decode function signature: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
+
 
 /**
  * Get the transaction history between a user and a contract
@@ -239,11 +263,7 @@ export async function getFunctionNameFromFunctionSelector(functionSelector: stri
  * @param network - The network to use (default is 'ethereum')
  * @returns An array of transaction objects with metadata
  */
-export async function getTwoAddressTransactionHistory(
-  addressOrEns1: string,
-  addressOrEns2: string,
-  network = 'ethereum',
-): Promise<any[]> {
+export async function getTwoAddressTransactionHistory(addressOrEns1: string, addressOrEns2: string, network = 'ethereum'): Promise<any[]> {
   // Resolve ENS name to address if needed
   const address1 = await resolveAddress(addressOrEns1, network);
   const address2 = await resolveAddress(addressOrEns2, network);

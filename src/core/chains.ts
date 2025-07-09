@@ -57,7 +57,7 @@ import {
   goerli,
   holesky,
   flowTestnet,
-  filecoinCalibration
+  filecoinCalibration,
 } from 'viem/chains';
 
 // Default configuration values
@@ -282,6 +282,69 @@ export const rpcUrlMap: Record<number, string> = {
   314159: 'https://api.calibration.node.glif.io/rpc/v1',
 };
 
+export const tenderlyRpcUrlMap: Record<number, string> = {
+  // Mainnets
+  1:   'https://mainnet.gateway.tenderly.co',
+  11155111: 'https://sepolia.gateway.tenderly.co',
+  17000:    'https://holesky.gateway.tenderly.co',
+
+  // Arbitrum
+  42161: 'https://arbitrum.gateway.tenderly.co',
+  42170: 'https://arbitrum-nova.gateway.tenderly.co',
+  421614: 'https://arbitrum-sepolia.gateway.tenderly.co',
+
+  // Optimism
+  10: 'https://optimism-mainnet.gateway.tenderly.co',
+  11155420: 'https://optimism-sepolia.gateway.tenderly.co',
+
+  // Avalanche
+  43114: 'https://avalanche.gateway.tenderly.co',
+  43113: 'https://avalanche-fuji.gateway.tenderly.co',
+
+  // Polygon
+  137: 'https://polygon-mainnet.gateway.tenderly.co',
+  80002: 'https://polygon-amoy.gateway.tenderly.co',
+
+  // Linea
+  59144: 'https://linea.gateway.tenderly.co',
+  59141: 'https://linea-sepolia.gateway.tenderly.co',
+
+  // Base
+  8453: 'https://base-mainnet.gateway.tenderly.co',
+  84532: 'https://base-sepolia.gateway.tenderly.co',
+
+  // Blast
+  81457: 'https://blast.gateway.tenderly.co',
+
+  // Fraxtal
+  252: 'https://fraxtal.gateway.tenderly.co',
+  2522: 'https://fraxtal-holesky.gateway.tenderly.co',
+
+  // Mantle
+  5000: 'https://mantle.gateway.tenderly.co',
+  5003: 'https://mantle-sepolia.gateway.tenderly.co',
+
+  // Mantis
+  1088: 'https://metis-andromeda.gateway.tenderly.co',
+  59902: 'https://metis-sepolia.gateway.tenderly.co',
+
+  // Mode
+  34443: 'https://mode.gateway.tenderly.co',
+  919: 'https://mode-sepolia.gateway.tenderly.co',
+
+  // Moonbeam
+  1284: 'https://moonbeam.gateway.tenderly.co',
+  1285: 'https://moonriver.gateway.tenderly.co',
+
+  // Scroll
+  534352: 'https://scroll-mainnet.gateway.tenderly.co',
+  534351: 'https://scroll-sepolia.gateway.tenderly.co',
+
+  // ZKsync
+  324: 'https://zksync.gateway.tenderly.co',
+  300: 'https://zksync-sepolia.gateway.tenderly.co',
+}
+
 /**
  * Resolves a chain identifier (number or string) to a chain ID
  * @param chainIdentifier Chain ID (number) or network name (string)
@@ -354,3 +417,11 @@ export function getSupportedNetworks(): string[] {
     .filter(name => name.length > 2) // Filter out short aliases
     .sort();
 } 
+
+export function getTenderlyRpcUrl(chainIdentifier: number | string = DEFAULT_CHAIN_ID): string {
+  const chainId = typeof chainIdentifier === 'string' 
+    ? resolveChainId(chainIdentifier) 
+    : chainIdentifier;
+    
+  return tenderlyRpcUrlMap[chainId] || `https://mainnet.gateway.tenderly.co`;
+}

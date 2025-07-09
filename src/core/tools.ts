@@ -1240,7 +1240,7 @@ export function registerEVMTools(server: McpServer) {
     "Get transaction history for an address including internal transactions",
     {
       address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'vitalik.eth')"),
-      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Defaults to Ethereum mainnet.")
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
     async ({ address, network = "ethereum" }) => {
       try {
@@ -1443,9 +1443,9 @@ export function registerEVMTools(server: McpServer) {
     "Get the detail transaction trace for a specific transaction",
     {
       txHash: z.string().describe("The transaction hash"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID.  Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
-    async ({ txHash }) => {
-      const network = 'ethereum';
+    async ({ txHash, network }) => {
       try {
         const trace = await services.getTransactionTrace(txHash as Hash, network);
         return {
@@ -1468,19 +1468,19 @@ export function registerEVMTools(server: McpServer) {
 
   // Get function name from function selector
   server.tool(
-    "get_function_name_from_function_selector",
-    "Get the function name from the function selector",
+    "get_function_name_from_call_data",
+    "Get the function name from call data (function selector) for a contract interaction",
     {
-      functionSelector: z.string().describe("The function selector which is the first 4 bytes of the function input signature"),
+      callData: z.string().describe("The call data to decode, typically the first 4 bytes of the transaction input data which is function selector, and the rest is arguments. This is in hex format."),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Defaults to Ethereum mainnet.")
     },
-    async ({ functionSelector }) => {
-      const network = 'ethereum';
+    async ({ callData, network }) => {
       try {
-        const functionName = await services.getFunctionNameFromFunctionSelector(functionSelector as string);
+        const result = await services.decodeInput(callData as string, network);
         return {
           content: [{
             type: "text",
-            text: `Function name: ${functionName}`
+            text: `Function name: ${result.functionName},\nArguments: ${services.helpers.formatJson(result.args!)}`
           }]
         };
       } catch (error) {
