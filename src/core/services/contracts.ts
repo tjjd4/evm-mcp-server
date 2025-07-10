@@ -9,6 +9,7 @@ import {
 } from 'viem';
 import { getPublicClient, getWalletClient } from './clients.js';
 import { resolveAddress } from './ens.js';
+import { getEtherscanChainId } from '../chains.js';
 
 /**
  * Read from a contract for a specific network
@@ -54,11 +55,18 @@ export async function isContract(addressOrEns: string, network = 'ethereum'): Pr
  * Get the ABI of a contract for a specific network
  */
 export async function getContractAbi(addressOrEns: string, network = 'ethereum'): Promise<Abi | undefined> {
+  if (!process.env.ETHERSCAN_API_KEY) {
+    throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
+  }
+  
   // Resolve ENS name to address if needed
   const address = await resolveAddress(addressOrEns, network);
-  
+  const etherscanChainId = getEtherscanChainId(network);
+  if (!etherscanChainId) {
+    throw new Error(`Unsupported network: ${network}`);
+  }
   // Use etherscan to get the contract ABI
-  const etherscanUrl = `https://api.etherscan.io/v2/api?chainid=1&module=contract&action=getabi&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`;
+  const etherscanUrl = `https://api.etherscan.io/v2/api?chainid=${etherscanChainId}&module=contract&action=getabi&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`;
 
   const response = await fetch(etherscanUrl);
   const data = await response.json();
@@ -78,9 +86,17 @@ export async function getContractAbi(addressOrEns: string, network = 'ethereum')
  */
 export async function getContractSourceCode(addressOrEns: string, network = 'ethereum'): Promise<Record<string, string> | string | undefined> {
   // Resolve ENS name to address if needed
-  const address = await resolveAddress(addressOrEns, network);
+  if (!process.env.ETHERSCAN_API_KEY) {
+    throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
+  }
   
-  const etherscanUrl = `https://api.etherscan.io/v2/api?chainid=1&module=contract&action=getsourcecode&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`;
+  const address = await resolveAddress(addressOrEns, network);
+  const etherscanChainId = getEtherscanChainId(network);
+  if (!etherscanChainId) {
+    throw new Error(`Unsupported network: ${network}`);
+  }
+
+  const etherscanUrl = `https://api.etherscan.io/v2/api?chainid=${etherscanChainId}&module=contract&action=getsourcecode&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`;
   const response = await fetch(etherscanUrl);
   const data = await response.json();
 

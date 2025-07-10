@@ -1205,9 +1205,9 @@ export function registerEVMTools(server: McpServer) {
     "Get transfer history for an address including ERC20, ERC721 and ERC1155 tokens",
     {
       address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'uniswap.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
-    async ({ address }) => {
-      const network = 'ethereum';
+    async ({ address, network = "ethereum" }) => {
       try {
         const transfers = await services.getTransferHistory(address.trim(), network);
 
@@ -1217,8 +1217,8 @@ export function registerEVMTools(server: McpServer) {
             text: services.helpers.formatJson({
               address,
               network,
-              amount: transfers.length,
-              transfers: transfers,
+              amount: transfers.transfers.length,
+              transfers: transfers.transfers,
             }),
           }]
         };
@@ -1227,6 +1227,39 @@ export function registerEVMTools(server: McpServer) {
           content: [{
             type: "text",
             text: `Error fetching recent transactions for ${address}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_receive_history",
+    "Get receive history for an address including ERC20, ERC721 and ERC1155 tokens",
+    {
+      address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'uniswap.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    async ({ address, network = "ethereum" }) => {
+      try {
+        const transfers = await services.getReceiveHistory(address.trim(), network);
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson({
+              address,
+              network,
+              amount: transfers.transfers.length,
+              transfers: transfers.transfers,
+            }),
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching receive history for ${address}: ${error instanceof Error ? error.message : String(error)}`
           }],
           isError: true
         };
@@ -1307,7 +1340,7 @@ export function registerEVMTools(server: McpServer) {
   // Get contract ABI (Ethereum Mainnet only)
   server.tool(
     "get_contract_abi",
-    "Get the ABI (Application Binary Interface) of a verified smart contract from Ethereum Mainnet using Etherscan",
+    "Get the ABI (Application Binary Interface) of a verified smart contract",
     {
       address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
     },
@@ -1315,10 +1348,6 @@ export function registerEVMTools(server: McpServer) {
       const network = 'ethereum'; // Hardcoded to Ethereum mainnet
       
       try {
-        if (!process.env.ETHERSCAN_API_KEY) {
-          throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
-        }
-
         const abi = await services.getContractAbi(address, network);
         
         if (!abi) {
@@ -1354,7 +1383,7 @@ export function registerEVMTools(server: McpServer) {
   // Get contract source code (Ethereum Mainnet only)
   server.tool(
     "get_contract_source_code",
-    "Get the source code of a verified smart contract from Ethereum Mainnet using Etherscan",
+    "Get the source code of a verified smart contract",
     {
       address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
     },
@@ -1362,10 +1391,6 @@ export function registerEVMTools(server: McpServer) {
       const network = 'ethereum'; // Hardcoded to Ethereum mainnet
       
       try {
-        if (!process.env.ETHERSCAN_API_KEY) {
-          throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
-        }
-
         const code = await services.getContractSourceCode(address, network);
         
         if (!code) {

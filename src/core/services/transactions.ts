@@ -4,7 +4,7 @@ import {
   type Abi,
   type TransactionReceipt,
   type EstimateGasParameters,
-  Hex,
+  type Hex,
   decodeFunctionData,
 } from 'viem';
 import {
@@ -12,12 +12,14 @@ import {
   Alchemy,
   AssetTransfersCategory,
   SortingOrder,
+  type AssetTransfersParams,
   type AssetTransfersWithMetadataResponse,
-  type AssetTransfersWithMetadataResult
+  type AssetTransfersWithMetadataResult,
 } from 'alchemy-sdk';
 import { getPublicClient, getTenderlyClient } from './clients.js';
 import { resolveAddress } from './ens.js';
 import { getContractAbi } from './contracts.js';
+import { getAlchemyChainName } from '../chains.js';
 
 /**
  * Get a transaction by hash for a specific network
@@ -87,58 +89,24 @@ export async function getChainId(network = 'ethereum'): Promise<number> {
  * @param network - The network to use (default is 'ethereum')
  * @returns An array of transaction objects with metadata
  */
-export async function getTransactionHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
+export async function getTransactionHistory(addressOrEns: string, network = 'ethereum'): Promise<any> {
+  const alchemyChainName = getAlchemyChainName(network);
+  if (!alchemyChainName) {
+    throw new Error(`Unsupported network: ${network}`);
+  }
+
+  const alchemyDataUrl = `https://api.g.alchemy.com/data/v1/${process.env.ALCHEMY_API_KEY}`;
   const address = await resolveAddress(addressOrEns, network);
+  const methodUrl = `transactions/history/by-address`;
 
-  const config = {
-    apiKey: process.env.ALCHEMY_API_KEY,
-    network: Network.ETH_MAINNET,
-  };
-  const alchemy = new Alchemy(config);
-
-  const from_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
-    fromBlock: "0x0",
-    fromAddress: address,
-    excludeZeroValue: false,
-    category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
-    order: SortingOrder.DESCENDING,
-    withMetadata: true
-  });
-
-  const to_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
-    fromBlock: "0x0",
-    toAddress: address,
-    excludeZeroValue: false,
-    category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
-    order: SortingOrder.DESCENDING,
-    withMetadata: true
-  });
-
-  const from_data = await from_response;
-  const to_data = await to_response;
-  const transactions: AssetTransfersWithMetadataResult[] = [];
-
-  if (from_data.transfers.length > 0) {
-    transactions.push(...from_data.transfers);
-  }
-
-  if (to_data.transfers.length > 0) {
-    transactions.push(...to_data.transfers);
-  }
-
-  const flattened = transactions.map(({ rawContract, metadata, ...rest }) => ({
-    ...rest,
-    contractAddress: rawContract?.address || null,
-    blockTimestamp: metadata?.blockTimestamp || null,
-  }));
-
-  const sorted = flattened.sort((a, b) => {
-    const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
-    const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
-    return bTime - aTime;
-  });
-
-  return sorted;
+  const response = await fetch(`${alchemyDataUrl}/${methodUrl}`, {
+    method: 'POST',
+    body: JSON.stringify({
+      addresses: [{ address, networks: [alchemyChainName] }]
+    })
+  })
+  if (!response.ok) throw new Error(`HTTP ${response.status}`)
+  return response.json()
 }
 
 /**
@@ -195,6 +163,7 @@ export async function decodeInput(callData: string, network = 'ethereum'): Promi
     name: string;
     decodedArguments: readonly unknown[] | undefined;
   };
+
   const client = getTenderlyClient(network);
 
   try {

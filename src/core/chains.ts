@@ -282,6 +282,7 @@ export const rpcUrlMap: Record<number, string> = {
   314159: 'https://api.calibration.node.glif.io/rpc/v1',
 };
 
+// Map chain IDs to Tenderly RPC URLs
 export const tenderlyRpcUrlMap: Record<number, string> = {
   // Mainnets
   1:   'https://mainnet.gateway.tenderly.co',
@@ -343,6 +344,87 @@ export const tenderlyRpcUrlMap: Record<number, string> = {
   // ZKsync
   324: 'https://zksync.gateway.tenderly.co',
   300: 'https://zksync-sepolia.gateway.tenderly.co',
+}
+
+// Map chain IDs to Alchemy chain names
+export const alchemyChainNameMap: Record<number, string> = {
+  1: 'eth-mainnet',
+  11155111: 'eth-sepolia',
+  17000: 'eth-holesky',
+  10: 'opt-mainnet',
+  11155420: 'opt-sepolia',
+  42161: 'arb-mainnet',
+  421614: 'arb-sepolia',
+  42170: 'arbnova-mainnet',
+  137: 'polygon-mainnet',
+  80002: 'polygon-amoy',
+  1101: 'polygonzkevm-mainnet',
+  8453: 'base-mainnet',
+  84532: 'base-sepolia',
+  324: 'zksync-mainnet',
+  300: 'zksync-sepolia',
+  59144: 'linea-mainnet',
+  59141: 'linea-sepolia',
+  250: 'fantom-mainnet',
+  81457: 'blast-mainnet',
+  168587773: 'blast-sepolia',
+  5000: 'mantle-mainnet',
+  5003: 'mantle-sepolia',
+  534352: 'scroll-mainnet',
+  534351: 'scroll-sepolia',
+  100: 'gnosis-mainnet',
+  56: 'bnb-mainnet',
+  97: 'bnb-testnet',
+  43114: 'avax-mainnet',
+  43113: 'avax-fuji',
+  42220: 'celo-mainnet',
+  44787: 'celo-alfajores',
+  1088: 'metis-mainnet',
+  7777777: 'zora-mainnet',
+  999999999: 'zora-sepolia',
+  252: 'frax-mainnet',
+  2522: 'frax-sepolia',
+  747: 'flow-mainnet',
+  545: 'flow-testnet',
+  994873017: 'lumia-prism',
+  1952959480: 'lumia-testnet',
+}
+
+export const etherscanChainMap: Record<number, string> = {
+  1: "Ethereum Mainnet",
+  10: "OP Mainnet",
+  25: "Cronos Mainnet",
+  56: "BNB Smart Chain Mainnet",
+  97: "BNB Smart Chain Testnet",
+  100: "Gnosis",
+  137: "Polygon Mainnet",
+  252: "Fraxtal Mainnet",
+  300: "zkSync Sepolia Testnet",
+  324: "zkSync Mainnet",
+  1284: "Moonbeam Mainnet",
+  1285: "Moonriver Mainnet",
+  2522: "Fraxtal Testnet",
+  5000: "Mantle Mainnet",
+  5003: "Mantle Sepolia Testnet",
+  8453: "Base Mainnet",
+  17000: "Holesky Testnet",
+  42161: "Arbitrum One Mainnet",
+  42170: "Arbitrum Nova Mainnet",
+  42220: "Celo Mainnet",
+  43113: "Avalanche Fuji Testnet",
+  43114: "Avalanche C-Chain",
+  44787: "Celo Alfajores Testnet",
+  59141: "Linea Sepolia Testnet",
+  59144: "Linea Mainnet",
+  80002: "Polygon Amoy Testnet",
+  81457: "Blast Mainnet",
+  84532: "Base Sepolia Testnet",
+  421614: "Arbitrum Sepolia Testnet",
+  534351: "Scroll Sepolia Testnet",
+  534352: "Scroll Mainnet",
+  11155111: "Sepolia Testnet",
+  11155420: "OP Sepolia Testnet",
+  168587773: "Blast Sepolia Testnet"
 }
 
 /**
@@ -423,5 +505,23 @@ export function getTenderlyRpcUrl(chainIdentifier: number | string = DEFAULT_CHA
     ? resolveChainId(chainIdentifier) 
     : chainIdentifier;
     
-  return tenderlyRpcUrlMap[chainId] || `https://mainnet.gateway.tenderly.co`;
+  return tenderlyRpcUrlMap[chainId];
+}
+
+export function getAlchemyChainName(chainIdentifier: number | string = DEFAULT_CHAIN_ID): string {
+  const chainId = typeof chainIdentifier === 'string' 
+    ? resolveChainId(chainIdentifier) 
+    : chainIdentifier;
+
+  return alchemyChainNameMap[chainId];
+}
+
+export function getEtherscanChainId(chainIdentifier: number | string = DEFAULT_CHAIN_ID): number {
+  const chainId = typeof chainIdentifier === 'string' 
+    ? resolveChainId(chainIdentifier) 
+    : chainIdentifier;
+  if (!etherscanChainMap[chainId]) {
+    throw new Error(`Unsupported chain: ${chainIdentifier}`);
+  }
+  return chainId;
 }

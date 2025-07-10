@@ -11,13 +11,12 @@ import {
 } from 'viem';
 import {
   Network,
-  Alchemy,
   AssetTransfersCategory,
   SortingOrder,
+  type AssetTransfersParams,
   type AssetTransfersWithMetadataResponse,
-  type AssetTransfersWithMetadataResult
 } from 'alchemy-sdk';
-import { getPublicClient, getWalletClient } from './clients.js';
+import { getAlchemyV2Client, getPublicClient, getWalletClient } from './clients.js';
 import { getChain } from '../chains.js';
 import { resolveAddress } from './ens.js';
 
@@ -445,58 +444,82 @@ export async function transferERC1155(
  * @param network Network name or chain ID
  * @returns Array of transfer events
  */
-export async function getTransferHistory(addressOrEns: string, network = 'ethereum'): Promise<any[]> {
+export async function getTransferHistory(addressOrEns: string, network = 'ethereum'): Promise<AssetTransfersWithMetadataResponse> {
   const address = await resolveAddress(addressOrEns, network);
 
-  const client = getPublicClient(network);
+  const client = getAlchemyV2Client(network);
 
-  const config = {
-    apiKey: process.env.ALCHEMY_API_KEY,
-    network: Network.ETH_MAINNET,
-  };
-  const alchemy = new Alchemy(config);
+  try {
+    const response = await client.request<{
+      method: 'alchemy_getAssetTransfers',
+      Parameters: AssetTransfersParams,
+      ReturnType: AssetTransfersWithMetadataResponse
+    }>({
+      method: "alchemy_getAssetTransfers",
+      params: {
+        fromBlock: "0x0",
+        fromAddress: address,
+        excludeZeroValue: false,
+        category: [
+          AssetTransfersCategory.ERC20,
+          AssetTransfersCategory.ERC721,
+          AssetTransfersCategory.ERC1155,
+          AssetTransfersCategory.EXTERNAL,
+          AssetTransfersCategory.INTERNAL
+        ],
+        order: SortingOrder.DESCENDING,
+        withMetadata: true
+      }
+    });
 
-  const from_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
-    fromBlock: "0x0",
-    fromAddress: address,
-    excludeZeroValue: false,
-    category: [AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721, AssetTransfersCategory.ERC1155],
-    order: SortingOrder.DESCENDING,
-    withMetadata: true
-  });
+    return response;
 
-  const to_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
-    fromBlock: "0x0",
-    toAddress: address,
-    excludeZeroValue: false,
-    category: [AssetTransfersCategory.ERC20, AssetTransfersCategory.ERC721, AssetTransfersCategory.ERC1155],
-    order: SortingOrder.DESCENDING,
-    withMetadata: true
-  });
-
-  const from_data = await from_response;
-  const to_data = await to_response;
-  const transfers: AssetTransfersWithMetadataResult[] = [];
-
-  if (from_data.transfers.length > 0) {
-    transfers.push(...from_data.transfers);
+  } catch (error) {
+    console.error('Error fetching decode input:', error);
+    throw new Error(`Failed to decode input: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
+}
 
-  if (to_data.transfers.length > 0) {
-    transfers.push(...to_data.transfers);
+/**
+ * Get the receive history for a specific address or ENS name
+ * @param addressOrEns Address or ENS name to resolve
+ * @param network Network name or chain ID
+ * @returns Array of receive events
+ */
+export async function getReceiveHistory(
+  addressOrEns: string,
+  network = 'ethereum'
+): Promise<AssetTransfersWithMetadataResponse> {
+  const address = await resolveAddress(addressOrEns, network);
+
+  const client = getAlchemyV2Client(network);
+
+  try {
+    const response = await client.request<{
+      method: 'alchemy_getAssetTransfers',
+      Parameters: AssetTransfersParams,
+      ReturnType: AssetTransfersWithMetadataResponse
+    }>({
+      method: "alchemy_getAssetTransfers",
+      params: {
+        toAddress: address,
+        excludeZeroValue: false,
+        category: [
+          AssetTransfersCategory.ERC20,
+          AssetTransfersCategory.ERC721,
+          AssetTransfersCategory.ERC1155,
+          AssetTransfersCategory.EXTERNAL,
+          AssetTransfersCategory.INTERNAL
+        ],
+        order: SortingOrder.DESCENDING,
+        withMetadata: true
+      }
+    });
+
+    return response;
+
+  } catch (error) {
+    console.error('Error fetching decode input:', error);
+    throw new Error(`Failed to decode input: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-
-  const flattened = transfers.map(({ rawContract, metadata, ...rest }) => ({
-    ...rest,
-    contractAddress: rawContract?.address || null,
-    blockTimestamp: metadata?.blockTimestamp || null,
-  }));
-
-  const sorted = flattened.sort((a, b) => {
-    const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
-    const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
-    return bTime - aTime;
-  });
-
-  return sorted;
 }
