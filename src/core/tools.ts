@@ -1308,7 +1308,7 @@ export function registerEVMTools(server: McpServer) {
     {
       addressOrEns1: z.string().describe("The first wallet or contract address or ENS name to check (e.g., '0x1234...' or 'vitalik.eth')"),
       addressOrEns2: z.string().describe("The second wallet or contract address or ENS name to check (e.g., '0x1234...' or 'vitalik.eth')"),
-      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Defaults to Ethereum mainnet.")
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
     async ({ addressOrEns1, addressOrEns2, network = "ethereum" }) => {
       try {
@@ -1342,11 +1342,10 @@ export function registerEVMTools(server: McpServer) {
     "get_contract_abi",
     "Get the ABI (Application Binary Interface) of a verified smart contract",
     {
-      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
+      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
-    async ({ address }) => {
-      const network = 'ethereum'; // Hardcoded to Ethereum mainnet
-      
+    async ({ address, network }) => {
       try {
         const abi = await services.getContractAbi(address, network);
         
@@ -1385,11 +1384,10 @@ export function registerEVMTools(server: McpServer) {
     "get_contract_source_code",
     "Get the source code of a verified smart contract",
     {
-      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')")
+      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
-    async ({ address }) => {
-      const network = 'ethereum'; // Hardcoded to Ethereum mainnet
-      
+    async ({ address, network }) => {
       try {
         const code = await services.getContractSourceCode(address, network);
         
