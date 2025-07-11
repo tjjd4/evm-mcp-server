@@ -2,7 +2,7 @@
   "name": "@tjjd4/evm-mcp-server",
   "module": "src/index.ts",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Model Context Protocol (MCP) server for interacting with EVM-compatible networks - Fork with additional features",
   "bin": {
     "evm-mcp-server": "./bin/cli.js"
