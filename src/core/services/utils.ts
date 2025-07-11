@@ -1,12 +1,6 @@
 import { 
   parseEther,
   formatEther,
-  type Account,
-  type Hash,
-  type Chain,
-  type WalletClient,
-  type Transport,
-  type HttpTransport
 } from 'viem';
 
 /**

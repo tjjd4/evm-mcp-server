@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { textChangeRangeIsUnchanged } from "typescript";
 import { z } from "zod";
 
 /**
