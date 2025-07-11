@@ -7,15 +7,7 @@ import {
   type Hex,
   decodeFunctionData,
 } from 'viem';
-import {
-  Network,
-  Alchemy,
-  AssetTransfersCategory,
-  SortingOrder,
-  type AssetTransfersParams,
-  type AssetTransfersWithMetadataResponse,
-  type AssetTransfersWithMetadataResult,
-} from 'alchemy-sdk';
+
 import { getPublicClient, getTenderlyClient } from './clients.js';
 import { resolveAddress } from './ens.js';
 import { getContractAbi } from './contracts.js';
@@ -222,70 +214,4 @@ export async function getFunctionNameAndArgsFromTx(hash: Hash, network = 'ethere
     console.error('Failed to decode function signature:', error);
     throw new Error(`Failed to decode function signature: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-}
-
-
-/**
- * Get the transaction history between a user and a contract
- * @param addressOrEns - The user's address or ENS name
- * @param contractAddressOrEns - The contract's address or ENS name
- * @param network - The network to use (default is 'ethereum')
- * @returns An array of transaction objects with metadata
- */
-export async function getTwoAddressTransactionHistory(addressOrEns1: string, addressOrEns2: string, network = 'ethereum'): Promise<any[]> {
-  // Resolve ENS name to address if needed
-  const address1 = await resolveAddress(addressOrEns1, network);
-  const address2 = await resolveAddress(addressOrEns2, network);
-
-  const config = {
-    apiKey: process.env.ALCHEMY_API_KEY,
-    network: Network.ETH_MAINNET,
-  };
-  const alchemy = new Alchemy(config);
-
-  const from_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
-    fromBlock: "0x0",
-    fromAddress: address1,
-    toAddress: address2,
-    excludeZeroValue: false,
-    category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
-    order: SortingOrder.DESCENDING,
-    withMetadata: true
-  });
-
-  const to_response: AssetTransfersWithMetadataResponse = await alchemy.core.getAssetTransfers({
-    fromBlock: "0x0",
-    fromAddress: address2,
-    toAddress: address1,
-    excludeZeroValue: false,
-    category: [AssetTransfersCategory.EXTERNAL, AssetTransfersCategory.INTERNAL],
-    order: SortingOrder.DESCENDING,
-    withMetadata: true
-  });
-
-  const from_data = await from_response;
-  const to_data = await to_response;
-  const transfers: AssetTransfersWithMetadataResult[] = [];
-
-  if (from_data.transfers.length > 0) {
-    transfers.push(...from_data.transfers);
-  }
-
-  if (to_data.transfers.length > 0) {
-    transfers.push(...to_data.transfers);
-  }
-
-  const flattened = transfers.map(({ rawContract, metadata, ...rest }) => ({
-    ...rest,
-    contractAddress: rawContract?.address || null,
-    blockTimestamp: metadata?.blockTimestamp || null,
-  }));
-
-  const sorted = flattened.sort((a, b) => {
-    const aTime = a.blockTimestamp ? new Date(a.blockTimestamp).getTime() : 0;
-    const bTime = b.blockTimestamp ? new Date(b.blockTimestamp).getTime() : 0;
-    return bTime - aTime;
-  });
-
-  return sorted;
 }

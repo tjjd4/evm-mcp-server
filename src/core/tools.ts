@@ -1301,43 +1301,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
-  // get transaction history between two addresses
-  server.tool(
-    "get_two_address_transaction_history",
-    "Get transaction history between two addresses including internal transactions, could be contracts or EOAs",
-    {
-      addressOrEns1: z.string().describe("The first wallet or contract address or ENS name to check (e.g., '0x1234...' or 'vitalik.eth')"),
-      addressOrEns2: z.string().describe("The second wallet or contract address or ENS name to check (e.g., '0x1234...' or 'vitalik.eth')"),
-      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
-    },
-    async ({ addressOrEns1, addressOrEns2, network = "ethereum" }) => {
-      try {
-        const transactions = await services.getTwoAddressTransactionHistory(addressOrEns1.trim(), addressOrEns2.trim(), network);
-        return {
-          content: [{
-            type: "text",
-            text: services.helpers.formatJson({
-              address1: addressOrEns1,
-              address2: addressOrEns2,
-              network,
-              amount: transactions.length,
-              transactions: transactions,
-            }),
-          }]
-        };
-      } catch (error) {
-        return {
-          content: [{
-            type: "text",
-            text: `Error fetching transactions history for ${addressOrEns1} and ${addressOrEns2}: ${error instanceof Error ? error.message : String(error)}`
-          }],
-          isError: true
-        };
-      }
-    }
-  );
-
-  // Get contract ABI (Ethereum Mainnet only)
+  // Get contract ABI
   server.tool(
     "get_contract_abi",
     "Get the ABI (Application Binary Interface) of a verified smart contract",
@@ -1379,7 +1343,7 @@ export function registerEVMTools(server: McpServer) {
     }
   );
 
-  // Get contract source code (Ethereum Mainnet only)
+  // Get contract source code
   server.tool(
     "get_contract_source_code",
     "Get the source code of a verified smart contract",
@@ -1427,9 +1391,9 @@ export function registerEVMTools(server: McpServer) {
     "Get the function name and arguments from the transaction input",
     {
       txHash: z.string().describe("The transaction hash"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
     },
-    async ({ txHash }) => {
-      const network = 'ethereum';
+    async ({ txHash, network }) => {
       try {
         const result = await services.getFunctionNameAndArgsFromTx(txHash as Hash, network);
         if (result) {
