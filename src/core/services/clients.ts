@@ -1,14 +1,15 @@
 import { 
   createPublicClient, 
   createWalletClient, 
-  http, 
+  http,
   type PublicClient,
   type WalletClient,
   type Hex,
-  type Address
+  type Address,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { getChain, getRpcUrl } from '../chains.js';
+import { getChain, getRpcUrl, getTenderlyRpcUrl, getAlchemyChainName } from '../chains.js';
+import { mainnet } from 'viem/chains';
 
 // Cache for clients to avoid recreating them for each request
 const clientCache = new Map<string, PublicClient>();
@@ -63,3 +64,39 @@ export function getAddressFromPrivateKey(privateKey: Hex): Address {
   const account = privateKeyToAccount(privateKey);
   return account.address;
 } 
+
+export function getTenderlyClient(network = 'ethereum'): PublicClient {
+  if (!process.env.TENDERLY_NODE_RPC_KEY) {
+      throw new Error('TENDERLY_NODE_RPC_KEY is not set in environment variables');
+  }
+
+  const chain = getChain(network);
+  const tenderlyRpcUrl = getTenderlyRpcUrl(network);
+  const client = createPublicClient({
+    chain: chain || mainnet,
+    transport: http(tenderlyRpcUrl + `/${process.env.TENDERLY_NODE_RPC_KEY}`),
+  });
+
+  return client;
+}
+
+export function getAlchemyV2Client(network = 'ethereum'): PublicClient {
+  if (!process.env.ALCHEMY_API_KEY) {
+    throw new Error('ALCHEMY_API_KEY is not set in environment variables');
+  }
+
+  const chain = getChain(network);
+  const alchemyChainName = getAlchemyChainName(network);
+  if (!alchemyChainName) {
+    throw new Error(`Unsupported network: ${network}`);
+  }
+
+  const alchemyV2RpcUrl = `https://${alchemyChainName}.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`;
+
+  const client = createPublicClient({
+    chain: chain || mainnet,
+    transport: http(alchemyV2RpcUrl),
+  });
+
+  return client;
+}

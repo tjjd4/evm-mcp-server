@@ -1193,4 +1193,613 @@ export function registerEVMTools(server: McpServer) {
       }
     }
   );
-} 
+
+  // =============================================
+  // NEW TOOLS
+  // =============================================
+  
+
+  // Get transfers history
+  server.tool(
+    "get_transfer_history",
+    "Get transfer history for an address including ERC20, ERC721 and ERC1155 tokens",
+    {
+      address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'uniswap.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    async ({ address, network = "ethereum" }) => {
+      try {
+        const transfers = await services.getTransferHistory(address.trim(), network);
+
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson({
+              address,
+              network,
+              amount: transfers.transfers.length,
+              transfers: transfers.transfers,
+            }),
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching recent transactions for ${address}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_receive_history",
+    "Get receive history for an address including ERC20, ERC721 and ERC1155 tokens",
+    {
+      address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'uniswap.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    async ({ address, network = "ethereum" }) => {
+      try {
+        const transfers = await services.getReceiveHistory(address.trim(), network);
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson({
+              address,
+              network,
+              amount: transfers.transfers.length,
+              transfers: transfers.transfers,
+            }),
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching receive history for ${address}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Get transactions history
+  server.tool(
+    "get_transaction_history",
+    "Get transaction history for an address including internal transactions",
+    {
+      address: z.string().describe("The wallet or contract address or ENS name to check (e.g., '0x1234...' or 'vitalik.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    async ({ address, network = "ethereum" }) => {
+      try {
+        const transactions = await services.getTransactionHistory(address.trim(), network);
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson({
+              address,
+              network,
+              amount: transactions.length,
+              transactions: transactions,
+            }),
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching transactions history for ${address}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Get contract ABI
+  server.tool(
+    "get_contract_abi",
+    "Get the ABI (Application Binary Interface) of a verified smart contract",
+    {
+      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    async ({ address, network }) => {
+      try {
+        const abi = await services.getContractAbi(address, network);
+        
+        if (!abi) {
+          return {
+            content: [{
+              type: 'text',
+              text: `No verified ABI found for contract at ${address} on Ethereum Mainnet`
+            }],
+            isError: true
+          };
+        }
+        
+        const abiString = JSON.stringify(abi, null, 2);
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `ABI for ${address} on Ethereum Mainnet:\n${abiString}`
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Failed to get contract ABI: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Get contract source code
+  server.tool(
+    "get_contract_source_code",
+    "Get the source code of a verified smart contract",
+    {
+      address: z.string().describe("Contract address or ENS name (e.g., '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' or 'uniswap.eth')"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    async ({ address, network }) => {
+      try {
+        const code = await services.getContractSourceCode(address, network);
+        
+        if (!code) {
+          return {
+            content: [{
+              type: 'text',
+              text: `No verified code found for contract at ${address} on Ethereum Mainnet`
+            }],
+            isError: true
+          };
+        }
+
+        const entries = Object.entries(code);
+        
+        return {
+          content: [{
+            type: 'text',
+            text: `Code for ${address} on Ethereum Mainnet:\n${JSON.stringify(entries, null, 2)}`
+          }],
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Failed to get contract code: ${error instanceof Error ? error.message : 'Unknown error'}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Get function name and arguments from transaction input
+  server.tool(
+    "get_function_name_args_from_tx",
+    "Get the function name and arguments from the transaction input",
+    {
+      txHash: z.string().describe("The transaction hash"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    async ({ txHash, network }) => {
+      try {
+        const result = await services.getFunctionNameAndArgsFromTx(txHash as Hash, network);
+        if (result) {
+          return {
+            content: [{
+              type: "text",
+              text: `Function name: ${result.functionName}\nArguments: ${services.helpers.formatJson(result.args)}`
+            }]
+          };
+        } else {
+          return {
+            content: [{
+              type: "text",
+              text: `No matching function found for transaction: ${txHash}`
+            }],
+            isError: true
+          };
+        }
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching function name and args: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Get transaction trace
+  server.tool(
+    "get_transaction_trace",
+    "Get the detail transaction trace for a specific transaction",
+    {
+      txHash: z.string().describe("The transaction hash"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID.  Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    async ({ txHash, network }) => {
+      try {
+        const trace = await services.getTransactionTrace(txHash as Hash, network);
+        return {
+          content: [{
+            type: "text",
+            text: services.helpers.formatJson(trace)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching transaction trace: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Get function name from function selector
+  server.tool(
+    "get_function_name_from_call_data",
+    "Get the function name from call data (function selector) for a contract interaction",
+    {
+      callData: z.string().describe("The call data to decode, typically the first 4 bytes of the transaction input data which is function selector, and the rest is arguments. This is in hex format."),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Defaults to Ethereum mainnet.")
+    },
+    async ({ callData, network }) => {
+      try {
+        const result = await services.decodeInput(callData as string, network);
+        return {
+          content: [{
+            type: "text",
+            text: `Function name: ${result.functionName},\nArguments: ${services.helpers.formatJson(result.args!)}`
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching function name: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_erc20_token_current_price",
+    "Get the current price of an ERC20 token in USD",
+    {
+      tokenSymbol: z.string().describe("Token symbol (e.g., 'usdt')")
+    },
+    async ({ tokenSymbol }) => {
+      const network = 'ethereum'; // Hardcoded to Ethereum mainnet
+      try {
+        const price = await services.getERC20TokenCurrentPrice(tokenSymbol, network);
+        if (!price) {
+          throw new Error('Failed to fetch token price');
+        }
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              tokenSymbol,
+              price
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching token price for ${tokenSymbol}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "get_token_symbol_from_address",
+    "Get the symbol of an ERC20 token from its contract address",
+    {
+      tokenAddress: z.string().describe("Token contract address (e.g., '0x...')")
+    },
+    async ({ tokenAddress }) => {
+      const network = 'ethereum'; // Hardcoded to Ethereum mainnet
+      try {
+        const symbol = await services.getERC20TokenSymbolFromAddress(tokenAddress as Address, network);
+        if (!symbol) {
+          throw new Error('Failed to fetch token symbol');
+        }
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              tokenAddress,
+              symbol
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error fetching token symbol for ${tokenAddress}: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // base on the analysis level, provide a recommended tool chain for transaction analysis
+  server.tool(
+    "analyze_transaction",
+    "Smart transaction analysis router that provides tool recommendations based on analysis level. Always call this first for transaction analysis to get guidance on which tools to use.",
+    {
+      level: z.enum(["basic", "detailed", "deep"]).describe("Analysis level: 'basic' (simple overview), 'detailed' (with trace and function), 'deep' (with source code and ABI)"),
+      txHash: z.string().describe("The transaction hash to analyze"),
+    },
+    async ({ level, txHash }) => {
+      const network = 'ethereum';
+      try {
+        // First, get basic transaction info to determine the analysis path
+        const transaction = await services.getTransaction(txHash as Hash, network);
+        const isContractTransaction = transaction.to && await services.isContract(transaction.to);
+        
+        let recommendations = `Transaction Analysis Plan (Level: ${level})\n\n`;
+        recommendations += `Transaction Hash: ${txHash}\n`;
+        recommendations += `Transaction Type: ${isContractTransaction ? 'Contract Interaction' : 'Simple Transfer'}\n`;
+        
+        if (transaction.to) {
+          recommendations += `Target Address: ${transaction.to}\n`;
+        }
+        
+        recommendations += `\nRecommended Tool Chain:\n`;
+        
+        // Always start with basic transaction info
+        recommendations += `1. get_transaction - Get basic transaction details\n`;
+        recommendations += `2. get_transaction_receipt - Get transaction receipt and events\n`;
+        
+        if (!isContractTransaction) {
+          recommendations += `\nThis is a simple ETH transfer. Basic tools above are sufficient.\n`;
+        } else {
+          // Contract transaction - provide level-specific recommendations
+          switch (level) {
+            case "basic":
+              recommendations += `3. is_contract - Confirm contract interaction\n`;
+              recommendations += `\nBasic analysis complete. For more details, use 'detailed' or 'deep' levels.\n`;
+              break;
+              
+            case "detailed":
+              recommendations += `3. get_function_name_args_from_tx - Extract function call details\n`;
+              recommendations += `4. get_transaction_trace - Get detailed execution trace\n`;
+              recommendations += `\nDetailed analysis with function calls and execution trace. This will help understand what function was called and how it executed.\n`;
+              break;
+              
+            case "deep":
+              recommendations += `3. get_function_name_args_from_tx - Extract function call details\n`;
+              recommendations += `4. get_transaction_trace - Get detailed execution trace\n`;
+              recommendations += `5. get_contract_abi - Get contract ABI\n`;
+              recommendations += `6. get_contract_source_code - Get contract source code\n`;
+              recommendations += `\nDeep analysis with complete contract understanding. Use all tools above for comprehensive transaction analysis including source code review.\n`;
+              break;
+          }
+          
+          recommendations += `\nOptional additional tools based on findings:\n`;
+          recommendations += `- get_function_name_from_function_selector - If you need to decode function selectors\n`;
+          recommendations += `- get_token_info - If ERC20 token transfers are involved\n`;
+          recommendations += `- get_nft_info - If NFT transfers are involved\n`;
+          recommendations += `- analyze_user_contract_interactions - For user behavior analysis\n`;
+        }
+        
+        return {
+          content: [{
+            type: "text",
+            text: recommendations
+          }]
+        };
+        
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error in transaction analysis planning: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // UTILITY TOOLS
+  
+  // Format wei to ether
+  server.tool(
+    "format_wei_to_ether",
+    "Convert wei to ether format for better readability",
+    {
+      wei: z.string().describe("Wei amount as string (e.g., '1000000000000000000' for 1 ETH)")
+    },
+    async ({ wei }) => {
+      try {
+        const result = services.helpers.formatEther(BigInt(wei));
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              wei,
+              ether: result
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error converting wei to ether: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Format ether to wei
+  server.tool(
+    "format_ether_to_wei",
+    "Convert ether to wei format for blockchain transactions",
+    {
+      ether: z.string().describe("Ether amount as string (e.g., '1.5' for 1.5 ETH)")
+    },
+    async ({ ether }) => {
+      try {
+        const result = services.helpers.parseEther(ether).toString();
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              ether,
+              wei: result
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error converting ether to wei: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Format a number with commas
+  server.tool(
+    "format_number",
+    "Format a number with commas for better readability",
+    {
+      value: z.string().describe("Number value as string (e.g., '1234567.89')")
+    },
+    async ({ value }) => {
+      try {
+        if (!value) {
+          throw new Error('Value is required');
+        }
+        const result = services.helpers.formatNumber(value);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              original: value,
+              formatted: result.toString()
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error formatting number: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Convert hex to number
+  server.tool(
+    "hex_to_number",
+    "Convert hexadecimal string to decimal number",
+    {
+      hex: z.string().describe("Hexadecimal string (with or without 0x prefix, e.g., '0x1a' or '1a')")
+    },
+    async ({ hex }) => {
+      try {
+        if (!hex) {
+          throw new Error('Hex string is required');
+        }
+        const result = services.helpers.hexToNumber(hex);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              hex,
+              decimal: result.toString()
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error converting hex to number: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
+  // Convert number to hex
+  server.tool(
+    "number_to_hex",
+    "Convert decimal number to hexadecimal string",
+    {
+      number: z.string().describe("Decimal number as string (e.g., '26' converts to '0x1a')")
+    },
+    async ({ number }) => {
+      try {
+        if (!number) {
+          throw new Error('Number is required');
+        }
+        const num = parseFloat(number);
+        if (isNaN(num)) {
+          throw new Error('Invalid number format');
+        }
+        const result = services.helpers.numberToHex(num);
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              decimal: number,
+              hex: result
+            }, null, 2)
+          }]
+        };
+      } catch (error) {
+        return {
+          content: [{
+            type: "text",
+            text: `Error converting number to hex: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+}
+
+
+

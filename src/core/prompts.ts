@@ -40,7 +40,7 @@ export function registerEVMPrompts(server: McpServer) {
         role: "user",
         content: {
           type: "text",
-          text: `Please analyze transaction ${txHash} on the ${network} network and provide a detailed explanation of what this transaction does, who the parties involved are, the amount transferred (if applicable), gas used, and any other relevant information.`
+          text: `Please analyze transaction ${txHash} on the ${network} network and provide a detailed explanation of what this transaction does, who the parties involved are, the amount transferred (if applicable), gas used, and any other relevant information. If the transaction is a contract interaction, please try to get the contract's source code for better explanation about the transaction intent.`
         }
       }]
     })
@@ -158,5 +158,72 @@ export function registerEVMPrompts(server: McpServer) {
       };
     }
   );
+  // Contract analysis prompt
+  server.prompt(
+    "analyze_contract",
+    "Analyze a smart contract",
+    {
+      contractAddress: z.string().describe("Smart contract address to analyze"),
+      abiJson: z.string().optional().describe("The contract ABI as a JSON string"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    ({ contractAddress, abiJson, network = "ethereum" }) => {
+      return {
+        messages: [{
+          role: "user",
+          content: {
+            type: "text",
+            text: abiJson
+              ? `Please analyze the smart contract at address ${contractAddress} on the ${network} network. Here is the ABI:\n\n${abiJson}\n\nProvide a brief usage and overview of this smart contract and a detailed explanation of its functions, events, and any potential security issues or vulnerabilities. Please try to get the smart contract's source code. If possible, explain how this contract interacts with other contracts or tokens.`
+              : `Please analyze the smart contract at address ${contractAddress} on the ${network} network. Provide a brief usage and overview of this smart contract and a detailed explanation of its functions, events, and any potential security issues or vulnerabilities. Please try to get the smart contract's source code. If possible, explain how this contract interacts with other contracts or tokens.`
+          }
+        }]
+      };
+    }
+  );
 
-} 
+  // Analyze user and contract interactions
+  server.prompt(
+    "analyze_user_contract_interactions",
+    "Analyze user interactions with a smart contract, including related transaction history",
+    {
+      userAddress: z.string().describe("User address or Ens name to analyze"),
+      contractAddress: z.string().describe("Smart contract address to analyze"),
+      txHash: z.string().optional().describe("Transaction hash to analyze"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    ({ userAddress, contractAddress, txHash, network = "ethereum" }) => {
+      return {
+        messages: [{
+          role: "user",
+          content: {
+            type: "text",
+            text: txHash
+              ? `Please analyze the transaction with hash ${txHash} made by user ${userAddress} with the smart contract at address ${contractAddress} on the ${network} network. Provide details about the transaction, including timestamps, values, function called, arguments, and any relevant events or logs.`
+              : `Please analyze the transactions made by user ${userAddress} with the smart contract at address ${contractAddress} on the ${network} network. Provide details about the transaction history, including timestamps, values, function called, arguments, and any relevant events or logs.`
+          }
+        }]
+      }
+    }
+  );
+
+  server.prompt(
+    "analyze_user_activity",
+    "Analyze a user's activity by examining the transaction history",
+    {
+      userAddress: z.string().describe("User address or Ens name to analyze"),
+      network: z.string().optional().describe("Network name (e.g., 'ethereum', 'optimism', 'arbitrum', 'base', etc.) or chain ID. Supports all EVM-compatible networks. Defaults to Ethereum mainnet.")
+    },
+    ({ userAddress, network = "ethereum" }) => {
+      return {
+        messages: [{
+          role: "user",
+          content: {
+            type: "text",
+            text: `Please analyze the user's activity by examining the transaction history of user ${userAddress} on the ${network} network. Provide details about recent transactions, including contract name, from address, to address, timestamps, values, function called, arguments, the main purpose of the transaction, and any relevant events or logs. Make sure to include all fields, if the value of the field is unavailable, please mention it as "N/A".`
+          }
+        }]
+      };
+    }
+  );
+}

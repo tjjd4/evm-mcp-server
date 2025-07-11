@@ -9,7 +9,14 @@ import {
   getContract,
   type Account
 } from 'viem';
-import { getPublicClient, getWalletClient } from './clients.js';
+import {
+  Network,
+  AssetTransfersCategory,
+  SortingOrder,
+  type AssetTransfersParams,
+  type AssetTransfersWithMetadataResponse,
+} from 'alchemy-sdk';
+import { getAlchemyV2Client, getPublicClient, getWalletClient } from './clients.js';
 import { getChain } from '../chains.js';
 import { resolveAddress } from './ens.js';
 
@@ -429,4 +436,90 @@ export async function transferERC1155(
     tokenId: tokenId.toString(),
     amount
   };
-} 
+}
+
+/**
+ * Get the transfer history for a specific address or ENS name
+ * @param addressOrEns Address or ENS name to resolve
+ * @param network Network name or chain ID
+ * @returns Array of transfer events
+ */
+export async function getTransferHistory(addressOrEns: string, network = 'ethereum'): Promise<AssetTransfersWithMetadataResponse> {
+  const address = await resolveAddress(addressOrEns, network);
+
+  const client = getAlchemyV2Client(network);
+
+  try {
+    const response = await client.request<{
+      method: 'alchemy_getAssetTransfers',
+      Parameters: AssetTransfersParams,
+      ReturnType: AssetTransfersWithMetadataResponse
+    }>({
+      method: "alchemy_getAssetTransfers",
+      params: {
+        fromBlock: "0x0",
+        fromAddress: address,
+        excludeZeroValue: false,
+        category: [
+          AssetTransfersCategory.ERC20,
+          AssetTransfersCategory.ERC721,
+          AssetTransfersCategory.ERC1155,
+          AssetTransfersCategory.EXTERNAL,
+          AssetTransfersCategory.INTERNAL
+        ],
+        order: SortingOrder.DESCENDING,
+        withMetadata: true
+      }
+    });
+
+    return response;
+
+  } catch (error) {
+    console.error('Error fetching decode input:', error);
+    throw new Error(`Failed to decode input: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get the receive history for a specific address or ENS name
+ * @param addressOrEns Address or ENS name to resolve
+ * @param network Network name or chain ID
+ * @returns Array of receive events
+ */
+export async function getReceiveHistory(
+  addressOrEns: string,
+  network = 'ethereum'
+): Promise<AssetTransfersWithMetadataResponse> {
+  const address = await resolveAddress(addressOrEns, network);
+
+  const client = getAlchemyV2Client(network);
+
+  try {
+    const response = await client.request<{
+      method: 'alchemy_getAssetTransfers',
+      Parameters: AssetTransfersParams,
+      ReturnType: AssetTransfersWithMetadataResponse
+    }>({
+      method: "alchemy_getAssetTransfers",
+      params: {
+        toAddress: address,
+        excludeZeroValue: false,
+        category: [
+          AssetTransfersCategory.ERC20,
+          AssetTransfersCategory.ERC721,
+          AssetTransfersCategory.ERC1155,
+          AssetTransfersCategory.EXTERNAL,
+          AssetTransfersCategory.INTERNAL
+        ],
+        order: SortingOrder.DESCENDING,
+        withMetadata: true
+      }
+    });
+
+    return response;
+
+  } catch (error) {
+    console.error('Error fetching decode input:', error);
+    throw new Error(`Failed to decode input: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}

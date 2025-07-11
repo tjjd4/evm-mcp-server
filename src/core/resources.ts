@@ -633,4 +633,147 @@ export function registerEVMResources(server: McpServer) {
       }
     }
   );
+
+  // =============================================
+  // UTILITY TOOLS
+  // =============================================
+  
+  // Format wei to ether
+  server.resource(
+    'format_wei_to_ether',
+    new ResourceTemplate("evm://format/wei-to-ether/{wei}", { list: undefined }),
+    async (uri, params) => {
+      try {
+        const wei = params.wei as string;
+
+        const result = services.helpers.formatEther(BigInt(wei));
+        return {
+          contents: [{
+            uri: uri.href,
+            text: result
+          }]
+        };
+      } catch (error) {
+        return {
+          contents: [{
+            uri: uri.href,
+            text: `Error converting wei to ether: ${error instanceof Error ? error.message : String(error)}`
+          }]
+        };
+      }
+    }
+  );
+
+  // Format ether to wei
+  server.resource(
+    'format_ether_to_wei',
+    new ResourceTemplate("evm://format/ether-to-wei/{ether}", { list: undefined }),
+    async (uri, params) => {
+      try {
+        const ether = params.ether as string;
+        const result = services.helpers.parseEther(ether).toString();
+        return {
+          contents: [{
+            uri: uri.href,
+            text: result
+          }]
+        };
+      } catch (error) {
+        return {
+          contents: [{
+            uri: uri.href,
+            text: `Error converting ether to wei: ${error instanceof Error ? error.message : String(error)}`
+          }]
+        };
+      }
+    }
+  );
+
+  // Format a number with commas
+  server.resource(
+    'format_number',
+    new ResourceTemplate("evm://format/number/{value}", { list: undefined }),
+    async (uri, params) => {
+      try {
+        const value = params.value as string;
+        if (!value) {
+          throw new Error('Value is required');
+        }
+        const result = services.helpers.formatNumber(value);
+        return {
+          contents: [{
+            uri: uri.href,
+            text: result.toString()
+          }]
+        };
+      } catch (error) {
+        return {
+          contents: [{
+            uri: uri.href,
+            text: `Error formatting number: ${error instanceof Error ? error.message : String(error)}`
+          }]
+        };
+      }
+    }
+  );
+
+  // Convert hex to number
+  server.resource(
+    'hex_to_number',
+    new ResourceTemplate("evm://format/hex-to-number/{hex}", { list: undefined }),
+    async (uri, params) => {
+      try {
+        const hex = params.hex as string;
+        if (!hex) {
+          throw new Error('Hex string is required');
+        }
+        const result = services.helpers.hexToNumber(hex);
+        return {
+          contents: [{
+            uri: uri.href,
+            text: result.toString()
+          }]
+        };
+      } catch (error) {
+        return {
+          contents: [{
+            uri: uri.href,
+            text: `Error converting hex to number: ${error instanceof Error ? error.message : String(error)}`
+          }]
+        };
+      }
+    }
+  );
+
+  // Convert number to hex
+  server.resource(
+    'number_to_hex',
+    new ResourceTemplate("evm://format/number-to-hex/{number}", { list: undefined }),
+    async (uri, params) => {
+      try {
+        const number = params.number as string;
+        if (!number) {
+          throw new Error('Number is required');
+        }
+        const num = parseFloat(number);
+        if (isNaN(num)) {
+          throw new Error('Invalid number format');
+        }
+        const result = services.helpers.numberToHex(num);
+        return {
+          contents: [{
+            uri: uri.href,
+            text: result
+          }]
+        };
+      } catch (error) {
+        return {
+          contents: [{
+            uri: uri.href,
+            text: `Error converting number to hex: ${error instanceof Error ? error.message : String(error)}`
+          }]
+        };
+      }
+    }
+  );
 } 

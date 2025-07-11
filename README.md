@@ -5,7 +5,56 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6)
 ![Viem](https://img.shields.io/badge/Viem-1.0+-green)
 
-A comprehensive Model Context Protocol (MCP) server that provides blockchain services across multiple EVM-compatible networks. This server enables AI agents to interact with Ethereum, Optimism, Arbitrum, Base, Polygon, and many other EVM chains with a unified interface.
+An enhanced Model Context Protocol (MCP) server that provides blockchain services across multiple EVM-compatible networks. This server enables AI agents to interact with Ethereum, Optimism, Arbitrum, Base, Polygon, and many other EVM chains with a unified interface.
+
+> **Note**: This is a fork of [evm-mcp-server](https://github.com/mcpdotdirect/evm-mcp-server) with additional features and improvements, adding contract and transaction analysis ability.
+---
+
+## ⚡️ Quick Start
+
+### 1. Clone and Install
+
+```bash
+git clone https://github.com/tjjd4/evm-mcp-server.git
+cd evm-mcp-server
+bun install   # or: npm install
+```
+
+### 2. API Key Setup (Required for Full Functionality)
+
+Copy the .env.sample or create a `.env` file in the project root.
+
+Bash command:
+```bash
+cp .env.sample .env  # copy the .env.sample and name it .env (suggested)
+touch .env           # create a empty .env file
+```
+.env file:
+```env
+ALCHEMY_API_KEY=your-alchemy-api-key-here
+
+ETHERSCAN_API_KEY=your-etherscan-api-key-here
+
+TENDERLY_NODE_RPC_KEY=your-tenderly-rpc-key-here
+```
+
+**Get your API keys:**
+- **Alchemy API Key**: [Get free key at dashboard.alchemy.com](https://dashboard.alchemy.com/)
+- **Etherscan API Key**: [Get free key at etherscan.io/myapikey](https://etherscan.io/myapikey)  
+- **Tenderly RPC Key**: [Get key at dashboard.tenderly.co](https://dashboard.tenderly.co/)
+
+### 3. Run the Server
+
+```bash
+# Using Bun
+bun run start     # stdio mode (for CLI tools like Cursor)
+bun run start:http # HTTP server mode (for web/SSE applications)
+
+# Using npm
+npm run start     # stdio mode (for CLI tools like Cursor)
+npm run start:http # HTTP server mode (for web/SSE applications)
+```
+---
 
 ## 📋 Contents
 
@@ -55,6 +104,7 @@ All services are exposed through a consistent interface of MCP tools and resourc
   - Check token balances
   - Transfer tokens between addresses
   - Approve spending allowances
+  - Get comprehensive transaction history
 
 - **NFTs (ERC721)**
   - Get collection and token metadata
@@ -79,6 +129,7 @@ All services are exposed through a consistent interface of MCP tools and resourc
 - **Native token transfers** across all supported networks
 - **Gas estimation** for transaction planning
 - **Transaction status** and receipt information
+- **Complete transaction history** with transfers and interactions
 - **Error handling** with descriptive messages
 
 ## 🌐 Supported Networks
@@ -142,6 +193,8 @@ All services are exposed through a consistent interface of MCP tools and resourc
 - Filecoin Calibration
 - Lumia Testnet
 
+**Note**: For the most up-to-date and accurate list of supported networks, always check `src/core/chains.ts` in the repository.
+
 ## 🛠️ Prerequisites
 
 - [Bun](https://bun.sh/) 1.0.0 or higher
@@ -151,8 +204,8 @@ All services are exposed through a consistent interface of MCP tools and resourc
 
 ```bash
 # Clone the repository
-git clone https://github.com/mcpdotdirect/mcp-evm-server.git
-cd mcp-evm-server
+git clone https://github.com/tjjd4/evm-mcp-server.git
+cd evm-mcp-server
 
 # Install dependencies with Bun
 bun install
@@ -174,6 +227,8 @@ These values are hardcoded in the application. If you need to modify them, you c
 - For chain configuration: `src/core/chains.ts`
 - For server configuration: `src/server/http-server.ts`
 
+> **Note**: Make sure your API keys are properly configured in the `.env` file before starting the server. Some features will not work without the required API keys.
+
 ## 🚀 Usage
 
 ### Using npx (No Installation Required)
@@ -182,58 +237,47 @@ You can run the MCP EVM Server directly without installation using npx:
 
 ```bash
 # Run the server in stdio mode (for CLI tools)
-npx @mcpdotdirect/evm-mcp-server
+npx @tjjd4/evm-mcp-server
 
 # Run the server in HTTP mode (for web applications)
-npx @mcpdotdirect/evm-mcp-server --http
+npx @tjjd4/evm-mcp-server --http
 ```
+
+> **Important**: When using npx, make sure you have a `.env` file with your API keys in the directory where you run the command.
 
 ### Running the Server Locally
 
 Start the server using stdio (for embedding in CLI tools):
 
 ```bash
-# Start the stdio server
-bun start
+# Using Bun
+bun run start    # Start the stdio server
+bun run dev      # Development mode with auto-reload
 
-# Development mode with auto-reload
-bun dev
+bun run start    # Start the stdio server
+bun run dev      # Development mode with auto-reload
 ```
 
 Or start the HTTP server with SSE for web applications:
 
 ```bash
-# Start the HTTP server
-bun start:http
+# Using Bun
+bun run start:http    # Start the HTTP server
+bun run dev:http      # Development mode with auto-reload
 
-# Development mode with auto-reload
-bun dev:http
+bun run start:http    # Start the HTTP server
+bun run dev:http      # Development mode with auto-reload
+
+# change bun -> npm if using npm and Node.js
 ```
 
 ### Connecting to the Server
 
 Connect to this MCP server using any MCP-compatible client. For testing and debugging, you can use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector).
 
-### Connecting from Cursor
 
-To connect to the MCP server from Cursor:
-
-1. Open Cursor and go to Settings (gear icon in the bottom left)
-2. Click on "Features" in the left sidebar
-3. Scroll down to "MCP Servers" section
-4. Click "Add new MCP server"
-5. Enter the following details:
-   - Server name: `evm-mcp-server`
-   - Type: `command`
-   - Command: `npx @mcpdotdirect/evm-mcp-server`
-
-6. Click "Save"
-
-Once connected, you can use the MCP server's capabilities directly within Cursor. The server will appear in the MCP Servers list and can be enabled/disabled as needed.
-
-### Using mcp.json with Cursor
-
-For a more portable configuration that you can share with your team or use across projects, you can create an `.cursor/mcp.json` file in your project's root directory:
+### Using mcp with models
+In mcp setup `.json` file, add the mcp server bellow:
 
 ```json
 {
@@ -242,8 +286,13 @@ For a more portable configuration that you can share with your team or use acros
       "command": "npx",
       "args": [
         "-y",
-        "@mcpdotdirect/evm-mcp-server"
-      ]
+        "@tjjd4/evm-mcp-server"
+      ],
+      "env": {
+        "ALCHEMY_API_KEY": "your-alchemy-api-key",
+        "ETHERSCAN_API_KEY": "your-etherscan-api-key",
+        "TENDERLY_NODE_RPC_KEY": "your-tenderly-api-key"
+      }
     },
     "evm-mcp-http": {
       "command": "npx",
@@ -251,17 +300,23 @@ For a more portable configuration that you can share with your team or use acros
         "-y", 
         "@mcpdotdirect/evm-mcp-server", 
         "--http"
-      ]
+      ],
+      "env": {
+        "ALCHEMY_API_KEY": "your-alchemy-api-key",
+        "ETHERSCAN_API_KEY": "your-etherscan-api-key",
+        "TENDERLY_NODE_RPC_KEY": "your-tenderly-api-key"
+      }
     }
   }
 }
 ```
 
-Place this file in your project's `.cursor` directory (create it if it doesn't exist), and Cursor will automatically detect and use these MCP server configurations when working in that project. This approach makes it easy to:
+> **Security Warning**: If you include API keys directly in the `.json` file, make sure to add it to your `.gitignore` to prevent committing sensitive data. Alternatively, you can omit the `env` section and rely on your system's `.env` file or environment variables.
 
-1. Share MCP configurations with your team
-2. Version control your MCP setup
-3. Use different server configurations for different projects
+For detailed configuration instructions, refer to the official documentation:
+- **Cursor**: [MCP Setup Guide](https://docs.cursor.com/mcp)
+- **Claude Desktop**: [MCP Configuration](https://docs.anthropic.com/en/docs/build-with-claude/mcp)
+- **General MCP**: [Model Context Protocol Documentation](https://modelcontextprotocol.io/)
 
 ### Example: HTTP Mode with SSE
 
@@ -281,53 +336,6 @@ This connects directly to the HTTP server's SSE endpoint, which is useful for:
 - Web applications that need to connect to the MCP server from the browser
 - Environments where running local commands isn't ideal
 - Sharing a single MCP server instance among multiple users or applications
-
-To use this configuration:
-1. Create a `.cursor` directory in your project root if it doesn't exist
-2. Save the above JSON as `mcp.json` in the `.cursor` directory
-3. Restart Cursor or open your project
-4. Cursor will detect the configuration and offer to enable the server(s)
-
-### Example: Using the MCP Server in Cursor
-
-After configuring the MCP server with `mcp.json`, you can easily use it in Cursor. Here's an example workflow:
-
-1. Create a new JavaScript/TypeScript file in your project:
-
-```javascript
-// blockchain-example.js
-async function main() {
-  try {
-    // Get ETH balance for an address using ENS
-    console.log("Getting ETH balance for vitalik.eth...");
-    
-    // When using with Cursor, you can simply ask Cursor to:
-    // "Check the ETH balance of vitalik.eth on mainnet"
-    // Or "Transfer 0.1 ETH from my wallet to vitalik.eth"
-    
-    // Cursor will use the MCP server to execute these operations 
-    // without requiring any additional code from you
-    
-    // This is the power of the MCP integration - your AI assistant
-    // can directly interact with blockchain data and operations
-  } catch (error) {
-    console.error("Error:", error.message);
-  }
-}
-
-main();
-```
-
-2. With the file open in Cursor, you can ask Cursor to:
-
-   - "Check the current ETH balance of vitalik.eth"
-   - "Look up the price of USDC on Ethereum"
-   - "Show me the latest block on Optimism"
-   - "Check if 0x1234... is a contract address"
-
-3. Cursor will use the MCP server to execute these operations and return the results directly in your conversation.
-
-The MCP server handles all the blockchain communication while allowing Cursor to understand and execute blockchain-related tasks through natural language.
 
 ### Connecting using Claude CLI
 
@@ -418,7 +426,11 @@ The server provides the following MCP tools for agents. **All tools that accept 
 | `read-contract` | Read smart contract state | `contractAddress` (address/ENS), `abi`, `functionName`, `args`, `network` |
 | `write-contract` | Write to smart contract | `contractAddress` (address/ENS), `abi`, `functionName`, `args`, `privateKey`, `network` |
 | `is-contract` | Check if address is a contract | `address` (address/ENS), `network` |
+| `get-contract-abi` | Get contract ABI from Etherscan | `address` (address/ENS) |
+| `get-contract-source-code` | Get contract source code | `address` (address/ENS) |
 | `resolve-ens` | Resolve ENS name to address | `ensName`, `network` |
+| `get-transfer-history` | Get transfer history for an address | `address` (address/ENS) |
+| `get-transaction-history` | Get complete transaction history | `address` (address/ENS), `network` |
 
 ### Resources
 

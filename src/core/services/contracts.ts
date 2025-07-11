@@ -1,13 +1,15 @@
 import { 
-  type Address, 
+  type Address,
   type Hash, 
   type Hex,
   type ReadContractParameters,
   type GetLogsParameters,
+  type Abi,
   type Log
 } from 'viem';
 import { getPublicClient, getWalletClient } from './clients.js';
 import { resolveAddress } from './ens.js';
+import { getEtherscanChainId } from '../chains.js';
 
 /**
  * Read from a contract for a specific network
@@ -20,11 +22,7 @@ export async function readContract(params: ReadContractParameters, network = 'et
 /**
  * Write to a contract for a specific network
  */
-export async function writeContract(
-  privateKey: Hex, 
-  params: Record<string, any>, 
-  network = 'ethereum'
-): Promise<Hash> {
+export async function writeContract(privateKey: Hex, params: Record<string, any>, network = 'ethereum'): Promise<Hash> {
   const client = getWalletClient(privateKey, network);
   return await client.writeContract(params as any);
 }
@@ -51,3 +49,85 @@ export async function isContract(addressOrEns: string, network = 'ethereum'): Pr
   const code = await client.getBytecode({ address });
   return code !== undefined && code !== '0x';
 } 
+
+
+/**
+ * Get the ABI of a contract for a specific network
+ */
+export async function getContractAbi(addressOrEns: string, network = 'ethereum'): Promise<Abi | undefined> {
+  if (!process.env.ETHERSCAN_API_KEY) {
+    throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
+  }
+  
+  // Resolve ENS name to address if needed
+  const address = await resolveAddress(addressOrEns, network);
+  const etherscanChainId = getEtherscanChainId(network);
+  if (!etherscanChainId) {
+    throw new Error(`Unsupported network: ${network}`);
+  }
+  // Use etherscan to get the contract ABI
+  const etherscanUrl = `https://api.etherscan.io/v2/api?chainid=${etherscanChainId}&module=contract&action=getabi&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`;
+
+  const response = await fetch(etherscanUrl);
+  const data = await response.json();
+  
+  if (data.status === '1') {
+    return JSON.parse(data.result);
+  } else {
+    return undefined;
+  }
+}
+
+/**
+ * 
+ * @param addressOrEns Address or ENS name of the contract
+ * @param network Network name or chain ID
+ * @returns The contract source code or undefined if not found
+ */
+export async function getContractSourceCode(addressOrEns: string, network = 'ethereum'): Promise<Record<string, string> | string | undefined> {
+  // Resolve ENS name to address if needed
+  if (!process.env.ETHERSCAN_API_KEY) {
+    throw new Error('ETHERSCAN_API_KEY is not set in environment variables');
+  }
+  
+  const address = await resolveAddress(addressOrEns, network);
+  const etherscanChainId = getEtherscanChainId(network);
+  if (!etherscanChainId) {
+    throw new Error(`Unsupported network: ${network}`);
+  }
+
+  const etherscanUrl = `https://api.etherscan.io/v2/api?chainid=${etherscanChainId}&module=contract&action=getsourcecode&address=${address}&apikey=${process.env.ETHERSCAN_API_KEY}`;
+  const response = await fetch(etherscanUrl);
+  const data = await response.json();
+
+  if (data.status === '1') {
+    
+    let sourceCodeString = data.result[0].SourceCode;
+    
+    if (sourceCodeString.startsWith('{{') && sourceCodeString.endsWith('}}')) {
+      sourceCodeString = sourceCodeString.slice(1, -1);
+
+      try {
+        const sourceCode = JSON.parse(sourceCodeString);
+        if (sourceCode.sources && typeof sourceCode.sources === 'object') {
+          const sourceCodes: Record<string, string> = {};
+          
+          // Iterate through each source file
+          for (const [filePath, sourceInfo] of Object.entries(sourceCode.sources as Record<string, { content: string }>)) {
+            // Extract just the filename without path
+            const fileName = filePath.split('/').pop() || filePath;
+            // Add to result with filename as key and content as value
+            sourceCodes[fileName] = sourceInfo.content;
+          }
+          return sourceCodes || sourceCode;
+        }
+      } catch (e) {
+        console.error('Failed to parse source code as JSON:', e);
+      }
+    } else {
+      return sourceCodeString;
+    }
+  } else {
+    return undefined;
+  }
+}
