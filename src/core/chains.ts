@@ -146,6 +146,7 @@ export const networkNameMap: Record<string, number> = {
   'avalanche': 43114,
   'avax': 43114,
   'binance': 56,
+  'binance-smart-chain': 56,
   'bsc': 56,
   'zksync': 324,
   'linea': 59144,
