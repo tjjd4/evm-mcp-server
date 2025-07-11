@@ -298,7 +298,7 @@ In mcp setup `.json` file, add the mcp server bellow:
       "command": "npx",
       "args": [
         "-y", 
-        "@mcpdotdirect/evm-mcp-server", 
+        "@tjjd4/evm-mcp-server", 
         "--http"
       ],
       "env": {
@@ -343,7 +343,7 @@ If you're using Claude CLI, you can connect to the MCP server with just two comm
 
 ```bash
 # Add the MCP server
-claude mcp add evm-mcp-server npx @mcpdotdirect/evm-mcp-server
+claude mcp add evm-mcp-server npx @tjjd4/evm-mcp-server
 
 # Start Claude with the MCP server enabled
 claude
