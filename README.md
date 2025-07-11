@@ -5,8 +5,9 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6)
 ![Viem](https://img.shields.io/badge/Viem-1.0+-green)
 
-A comprehensive Model Context Protocol (MCP) server that provides blockchain services across multiple EVM-compatible networks. This server enables AI agents to interact with Ethereum, Optimism, Arbitrum, Base, Polygon, and many other EVM chains with a unified interface.
+An enhanced Model Context Protocol (MCP) server that provides blockchain services across multiple EVM-compatible networks. This server enables AI agents to interact with Ethereum, Optimism, Arbitrum, Base, Polygon, and many other EVM chains with a unified interface.
 
+> **Note**: This is a fork of [evm-mcp-server](https://github.com/mcpdotdirect/evm-mcp-server) with additional features and improvements, adding contract and transaction analysis ability.
 ---
 
 ## ⚡️ Quick Start
@@ -14,8 +15,8 @@ A comprehensive Model Context Protocol (MCP) server that provides blockchain ser
 ### 1. Clone and Install
 
 ```bash
-git clone https://github.com/mcpdotdirect/mcp-evm-server.git
-cd mcp-evm-server
+git clone https://github.com/tjjd4/evm-mcp-server.git
+cd evm-mcp-server
 bun install   # or: npm install
 ```
 
@@ -57,21 +58,20 @@ npm run start:http # HTTP server mode (for web/SSE applications)
 
 ## 📋 Contents
 
-- [Quick Start](#-quick-start)
-- [Overview](#-overview)
-- [Features](#-features)
-- [Supported Networks](#-supported-networks)
-- [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
-- [API Key Setup](#-api-key-setup)
-- [Usage](#-usage)
-- [API Reference](#-api-reference)
+- [Overview](#overview)
+- [Features](#features)
+- [Supported Networks](#supported-networks)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Server Configuration](#server-configuration)
+- [Usage](#usage)
+- [API Reference](#api-reference)
   - [Tools](#tools)
   - [Resources](#resources)
-- [Security Considerations](#-security-considerations)
-- [Project Structure](#-project-structure)
-- [Development](#-development)
-- [License](#-license)
+- [Security Considerations](#security-considerations)
+- [Project Structure](#project-structure)
+- [Development](#development)
+- [License](#license)
 
 ## 🔭 Overview
 
@@ -97,11 +97,11 @@ All services are exposed through a consistent interface of MCP tools and resourc
 - **Address balances** for native tokens and all token standards
 - **ENS resolution** for human-readable Ethereum addresses (use 'vitalik.eth' instead of '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045')
 
-### Token Services
+### Token services
 
 - **ERC20 Tokens**
   - Get token metadata (name, symbol, decimals, supply)
-  - Check token balances for any address
+  - Check token balances
   - Transfer tokens between addresses
   - Approve spending allowances
   - Get comprehensive transaction history
@@ -111,22 +111,18 @@ All services are exposed through a consistent interface of MCP tools and resourc
   - Verify token ownership
   - Transfer NFTs between addresses
   - Retrieve token URIs and count holdings
-  - Access collection-level information
 
 - **Multi-tokens (ERC1155)**
   - Get token balances and metadata
-  - Transfer tokens with quantity support
-  - Access token URIs and metadata
-  - Batch operations support
+  - Transfer tokens with quantity
+  - Access token URIs
 
 ### Smart Contract Interactions
 
 - **Read contract state** through view/pure functions
-- **Write transactions** with private key signing
+- **Write services** with private key signing
 - **Contract verification** to distinguish from EOAs
 - **Event logs** retrieval and filtering
-- **ABI and source code** lookup from Etherscan
-- **Contract deployment** detection and analysis
 
 ### Comprehensive Transaction Support
 
@@ -197,6 +193,8 @@ All services are exposed through a consistent interface of MCP tools and resourc
 - Filecoin Calibration
 - Lumia Testnet
 
+**Note**: For the most up-to-date and accurate list of supported networks, always check `src/core/chains.ts` in the repository.
+
 ## 🛠️ Prerequisites
 
 - [Bun](https://bun.sh/) 1.0.0 or higher
@@ -206,8 +204,8 @@ All services are exposed through a consistent interface of MCP tools and resourc
 
 ```bash
 # Clone the repository
-git clone https://github.com/mcpdotdirect/mcp-evm-server.git
-cd mcp-evm-server
+git clone https://github.com/tjjd4/evm-mcp-server.git
+cd evm-mcp-server
 
 # Install dependencies with Bun
 bun install
@@ -216,84 +214,12 @@ bun install
 npm install
 ```
 
-## 🔑 API Key Setup
-
-The MCP EVM Server requires API keys from external services to provide full functionality. Some features will work without API keys, but others require them for data access.
-
-### Required API Keys
-
-Copy the .env.sample or create a `.env` file in your project root and add the following keys:
-
-```env
-# REQUIRED: For transaction history, transfers, and enhanced blockchain data
-ALCHEMY_API_KEY=your_alchemy_api_key_here
-
-# REQUIRED: For smart contract ABI and source code lookups (Ethereum mainnet only)
-ETHERSCAN_API_KEY=your_etherscan_api_key_here
-
-# REQUIRED: For enhanced RPC features and transaction tracing
-TENDERLY_NODE_RPC_KEY=your_tenderly_rpc_key_here
-```
-
-### How to Get API Keys
-
-#### 1. Alchemy API Key (Required)
-- Visit [dashboard.alchemy.com](https://dashboard.alchemy.com/)
-- Sign up for a free account
-- Create a new app
-- Copy your API key from the app dashboard
-- **Used for**: Transaction history, token transfers, enhanced blockchain data
-
-#### 2. Etherscan API Key (Required)
-- Visit [etherscan.io/myapikey](https://etherscan.io/myapikey)
-- Sign up for a free account
-- Generate a new API key
-- **Used for**: Smart contract ABI lookups, source code verification (Ethereum mainnet only)
-
-#### 3. Tenderly RPC Key (Required)
-- Visit [dashboard.tenderly.co](https://dashboard.tenderly.co/)
-- Sign up for an account
-- Navigate to Node RPC settings
-- Create a new access key
-- **Used for**: Enhanced RPC features, transaction simulation, debugging
-
-### Features by API Key
-
-| Feature | Alchemy | Etherscan | Tenderly | Works Without Keys |
-|---------|---------|-----------|----------|-------------------|
-| Basic balance queries | ✅ | ❌ | ❌ | ✅ |
-| Transaction history | ✅ | ❌ | ❌ | ❌ |
-| Token transfers | ✅ | ❌ | ❌ | ❌ |
-| Contract ABI lookup | ❌ | ✅ | ❌ | ❌ |
-| Contract source code | ❌ | ✅ | ❌ | ❌ |
-| Token metadata | ✅ | ❌ | ❌ | ✅ (limited) |
-| ENS resolution | ❌ | ❌ | ❌ | ✅ |
-| Contract interactions | ❌ | ❌ | ❌ | ✅ |
-| Transaction traces | ❌ | ❌ | ✅ | ❌ |
-
-### Environment File Example
-
-```env
-# .env file - place this in your project root
-
-# Alchemy (Required) - Get from https://dashboard.alchemy.com/
-ALCHEMY_API_KEY=alcht_1234567890abcdef1234567890abcdef
-
-# Etherscan (Required) - Get from https://etherscan.io/myapikey  
-ETHERSCAN_API_KEY=ABC123DEF456GHI789JKL012MNO345PQR678
-
-# Tenderly (Optional) - Get from https://dashboard.tenderly.co/
-TENDERLY_NODE_RPC_KEY=tenderly_1234567890abcdef1234567890abcdef
-```
-
-> **Security Note**: Never commit your `.env` file to version control. Add `.env` to your `.gitignore` file.
-
 ## ⚙️ Server Configuration
 
 The server uses the following default configuration:
 
 - **Default Chain ID**: 1 (Ethereum Mainnet)
-- **Server Port**: 3001 (HTTP mode)
+- **Server Port**: 3001
 - **Server Host**: 0.0.0.0 (accessible from any network interface)
 
 These values are hardcoded in the application. If you need to modify them, you can edit the following files:
@@ -311,10 +237,10 @@ You can run the MCP EVM Server directly without installation using npx:
 
 ```bash
 # Run the server in stdio mode (for CLI tools)
-npx @mcpdotdirect/evm-mcp-server
+npx @tjjd4/evm-mcp-server
 
 # Run the server in HTTP mode (for web applications)
-npx @mcpdotdirect/evm-mcp-server --http
+npx @tjjd4/evm-mcp-server --http
 ```
 
 > **Important**: When using npx, make sure you have a `.env` file with your API keys in the directory where you run the command.
@@ -360,7 +286,7 @@ In mcp setup `.json` file, add the mcp server bellow:
       "command": "npx",
       "args": [
         "-y",
-        "@mcpdotdirect/evm-mcp-server"
+        "@tjjd4/evm-mcp-server"
       ],
       "env": {
         "ALCHEMY_API_KEY": "your-alchemy-api-key",
@@ -503,8 +429,8 @@ The server provides the following MCP tools for agents. **All tools that accept 
 | `get-contract-abi` | Get contract ABI from Etherscan | `address` (address/ENS) |
 | `get-contract-source-code` | Get contract source code | `address` (address/ENS) |
 | `resolve-ens` | Resolve ENS name to address | `ensName`, `network` |
-| `get-transfers-history` | Get transfer history for an address | `address` (address/ENS) |
-| `get-transactions-history` | Get complete transaction history | `address` (address/ENS), `network` |
+| `get-transfer-history` | Get transfer history for an address | `address` (address/ENS) |
+| `get-transaction-history` | Get complete transaction history | `address` (address/ENS), `network` |
 
 ### Resources
 

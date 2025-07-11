@@ -1,9 +1,9 @@
 {
-  "name": "@mcpdotdirect/evm-mcp-server",
+  "name": "@tjjd4/evm-mcp-server",
   "module": "src/index.ts",
   "type": "module",
-  "version": "1.2.0",
-  "description": "Model Context Protocol (MCP) server for interacting with EVM-compatible networks",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) server for interacting with EVM-compatible networks - Fork with additional features",
   "bin": {
     "evm-mcp-server": "./bin/cli.js"
   },
@@ -57,19 +57,19 @@
     "ai",
     "agent"
   ],
-  "author": "Etheral <etheral.eth.dev@gmail.com>",
+  "author": "tjjd4 <t01123581321345589@gmail.com>",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mcpdotdirect/evm-mcp-server"
+    "url": "https://github.com/tjjd4/evm-mcp-server"
   },
   "bugs": {
-    "url": "https://github.com/mcpdotdirect/evm-mcp-server/issues"
+    "url": "https://github.com/tjjd4/evm-mcp-server/issues"
   },
-  "homepage": "https://github.com/mcpdotdirect/evm-mcp-server#readme",
+  "homepage": "https://github.com/tjjd4/evm-mcp-server#readme",
   "publishConfig": {
     "access": "public"
   }
