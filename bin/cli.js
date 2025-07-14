@@ -13,7 +13,7 @@ const require = createRequire(import.meta.url);
 const args = process.argv.slice(2);
 const httpMode = args.includes('--http') || args.includes('-h');
 
-console.log(`Starting EVM MCP Server in ${httpMode ? 'HTTP' : 'stdio'} mode...`);
+console.error(`Starting EVM MCP Server in ${httpMode ? 'HTTP' : 'stdio'} mode...`);
 
 // Determine which file to execute
 const scriptPath = resolve(__dirname, '../build', httpMode ? 'http-server.js' : 'index.js');
