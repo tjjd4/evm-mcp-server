@@ -866,11 +866,11 @@ export function registerEVMTools(server: McpServer) {
         return {
           content: [{
             type: "text",
-            text: JSON.stringify({
+            text: services.helpers.formatJson({
               address: tokenAddress,
               network,
               ...tokenInfo
-            }, null, 2)
+            })
           }]
         };
       } catch (error) {
