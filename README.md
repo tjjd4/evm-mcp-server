@@ -36,6 +36,8 @@ ALCHEMY_API_KEY=your-alchemy-api-key-here
 ETHERSCAN_API_KEY=your-etherscan-api-key-here
 
 TENDERLY_NODE_RPC_KEY=your-tenderly-rpc-key-here
+
+COINGECKO_API_KEY=your-coingecko-api-key-here
 ```
 
 **Get your API keys:**
@@ -291,7 +293,8 @@ In mcp setup `.json` file, add the mcp server bellow:
       "env": {
         "ALCHEMY_API_KEY": "your-alchemy-api-key",
         "ETHERSCAN_API_KEY": "your-etherscan-api-key",
-        "TENDERLY_NODE_RPC_KEY": "your-tenderly-api-key"
+        "TENDERLY_NODE_RPC_KEY": "your-tenderly-api-key",
+        "COINGECKO_API_KEY": "your-coingecko-api-key-here"
       }
     },
     "evm-mcp-http": {
@@ -304,7 +307,8 @@ In mcp setup `.json` file, add the mcp server bellow:
       "env": {
         "ALCHEMY_API_KEY": "your-alchemy-api-key",
         "ETHERSCAN_API_KEY": "your-etherscan-api-key",
-        "TENDERLY_NODE_RPC_KEY": "your-tenderly-api-key"
+        "TENDERLY_NODE_RPC_KEY": "your-tenderly-api-key",
+        "COINGECKO_API_KEY": "your-coingecko-api-key-here"
       }
     }
   }
